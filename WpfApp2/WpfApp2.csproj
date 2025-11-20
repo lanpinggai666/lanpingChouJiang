@@ -9,6 +9,10 @@
     <ApplicationIcon>headimg_dl_256x256.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>蓝屏抽奖机</AssemblyName>
+    <Version>1.2.0</Version>
+    <Authors>蓝屏钙，好喝的钙</Authors>
+    <SignAssembly>False</SignAssembly>
+    <AssemblyOriginatorKeyFile>bin\Release\net8.0-windows\lanpinggai_CodeSigning.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

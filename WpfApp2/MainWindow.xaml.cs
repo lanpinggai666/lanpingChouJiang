@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata;
@@ -10,6 +11,8 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using WpfApp2;
+
 namespace WpfApp1
 {
     public partial class AWindow : Window
@@ -17,6 +20,18 @@ namespace WpfApp1
         private const int HWND_TOPMOST = -1;
         private const int SWP_NOSIZE = 0x0001;
         private const int SWP_NOMOVE = 0x0002;
+
+        // Win32 API 声明 - 新增的窗口样式相关常量和方法
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+
         private bool Boy_isChecked { get; set; }
         public ICommand ExecuteActionCommand { get; private set; }
         public bool OnlyBoy = false;
@@ -27,16 +42,20 @@ namespace WpfApp1
         public bool AlreadyBe = true;
         public string Opened = string.Empty;
         private DispatcherTimer _clearTimer;
+
         public AWindow()
         {
             int Width = 0;
             int Height = 0;
             InitializeComponent();
+
+            // 设置不在任务栏显示
+            ShowInTaskbar = false;
+
             DispatcherTimer timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1); // 设置时间间隔为1秒
             timer.Tick += Timer_Tick;
             timer.Start();
-
 
             string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
             // 检查文件夹是否存在
@@ -60,7 +79,66 @@ namespace WpfApp1
             _clearTimer = new DispatcherTimer();
             _clearTimer.Interval = TimeSpan.FromMinutes(15);
             _clearTimer.Tick += ClearAlreadyFile;
+
+            // 订阅 SourceInitialized 事件来设置窗口样式和置顶
+            this.SourceInitialized += AWindow_SourceInitialized;
+
+            // 订阅会话切换事件（处理锁屏）
+            Microsoft.Win32.SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
         }
+
+        // 新增的方法：设置窗口为工具窗口样式并置顶
+        private void AWindow_SourceInitialized(object sender, EventArgs e)
+        {
+            // 获取窗口句柄
+            var hwnd = new WindowInteropHelper(this).Handle;
+
+            // 设置窗口扩展样式为工具窗口
+            int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            exStyle |= WS_EX_TOOLWINDOW;
+            SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+
+            // 设置窗口为系统级置顶
+            SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+            // 同时设置WPF的Topmost属性作为辅助
+            this.Topmost = true;
+        }
+
+        // 处理锁屏/解锁事件
+        private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
+        {
+            switch (e.Reason)
+            {
+                // 锁屏时取消置顶，避免遮挡登录界面
+                case Microsoft.Win32.SessionSwitchReason.SessionLock:
+                    this.Topmost = false;
+                    break;
+                // 解锁时恢复置顶
+                case Microsoft.Win32.SessionSwitchReason.SessionUnlock:
+                    this.Topmost = true;
+                    // 重新设置系统级置顶
+                    var hwnd = new WindowInteropHelper(this).Handle;
+                    if (hwnd != IntPtr.Zero)
+                    {
+                        SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                    }
+                    break;
+            }
+        }
+
+        // 窗口激活状态变化时重新确保置顶
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            // 确保窗口保持置顶状态
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd != IntPtr.Zero)
+            {
+                SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+            }
+        }
+
         private void ClearAlreadyFile(object sender, EventArgs e)
         {
             string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
@@ -77,6 +155,7 @@ namespace WpfApp1
                 MessageBox.Show($"错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
         public static string? ReadSpecificLine(string filePath, int lineNumber)
         {
             try
@@ -94,6 +173,7 @@ namespace WpfApp1
                 return null;
             }
         }
+
         void Open_mindan(object sender, EventArgs e)
         {
             string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
@@ -103,6 +183,13 @@ namespace WpfApp1
             process.Start();
             return;
         }
+        void test2(object sender, EventArgs e)
+        {
+            Window1 w1 = new Window1();
+            // w8.Show(); // 打开一个非模态窗口，两个窗口都可以操作
+            w1.ShowDialog(); // 打开一个模态窗口，只有Window8窗口可以操作，Window9窗口不可操作
+        }
+        
         void Only_Boy(object sender, EventArgs e)
         {
             if (OnlyBoy == false)
@@ -123,8 +210,8 @@ namespace WpfApp1
                 OnlyBoy = false;
                 Boy.Header = "只抽男的";
             }
-
         }
+
         void Only_Girl(object sender, EventArgs e)
         {
             if (OnlyGirl == false)
@@ -145,15 +232,11 @@ namespace WpfApp1
                 OnlyGirl = false;
                 Girl.Header = "只抽女的";
             }
-
         }
 
-
-
-        // 在主视图模型（如Window的DataContext）中，包含一个ObservableCollection<MenuItemModel>类型的TestItems属性[citation:6]。
         void MenuItem_About_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("作者：蓝屏钙，好喝的钙\nCV高级工程师\n版本：v1.0\n邮箱：hy12121@outlook.com\nGitHub：https://github.com/lanpinggai666\n软件开源，禁止倒卖！",
+            MessageBox.Show("作者：蓝屏钙，好喝的钙\nCV高级工程师\n版本：v1.2.0\n邮箱：hy12121@outlook.com\nGitHub：https://github.com/lanpinggai666\n软件开源，禁止倒卖！",
                 "关于本软件",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
@@ -190,18 +273,18 @@ namespace WpfApp1
             File.Delete(AlreadyPath);
             File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
         }
-        // 读取指定行的方法
-
 
         void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
         {
             Process.GetCurrentProcess().Kill();
         }
+
         private void Timer_Tick(object sender, EventArgs e)
         {
             time.Text = DateTime.Now.ToString("HH:mm");
         }
-        void button1_Click(object sender, RoutedEventArgs e)
+
+        void button1_Click(object sender, EventArgs e)
         {
             int studentsCount;
             string mindanPath = System.IO.Path.Combine(documentsPath, "mindan");
@@ -249,9 +332,9 @@ namespace WpfApp1
                     lineCount++;
                 }
             }
-            if(!File.Exists(AlreadyPath))
+            if (!File.Exists(AlreadyPath))
             {
-                 File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+                File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
             }
             using (StreamReader sr = new StreamReader(AlreadyPath, Encoding.UTF8))
             {
@@ -270,7 +353,6 @@ namespace WpfApp1
 
             if (!File.Exists(CountPath))
             {
-
                 File.WriteAllText(CountPath, studentsCount.ToString(), Encoding.UTF8);
                 File.SetAttributes(CountPath, File.GetAttributes(CountPath) | FileAttributes.Hidden);
             }
@@ -337,7 +419,6 @@ namespace WpfApp1
                         process.StartInfo.Arguments = $"\"{path}\"";
                         process.Start();
                         return;
-
                     }
 
                     if (string.IsNullOrEmpty(studentsName))
@@ -352,7 +433,6 @@ namespace WpfApp1
                     {
                         while (sr.ReadLine() != null)
                         {
-
                             AlreadylineCount++;
                         }
                     }
@@ -389,7 +469,7 @@ namespace WpfApp1
                     string IsRestested = string.Empty;
                     if (AlreadylineCount <= 2 && AlreadyBe == true)
                     {
-                        IsRestested = "已重置点名不重复\n" ;
+                        IsRestested = "已重置点名不重复\n";
                     }
                     MessageBox.Show($"{IsRestested}幸运儿是{BoyOrGirl}：{studentsName}({studentsCount})\n{Opened}",
                         "抽奖结果",
@@ -412,6 +492,13 @@ namespace WpfApp1
                     }
                 }
             }
+        }
+
+        // 窗口关闭时取消事件订阅
+        protected override void OnClosed(EventArgs e)
+        {
+            Microsoft.Win32.SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
+            base.OnClosed(e);
         }
     }
 }

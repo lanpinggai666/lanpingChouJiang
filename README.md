@@ -28,7 +28,7 @@
 ### 为什么叫蓝屏点名器
 **~~因为本人水平低，代码写得稀烂。因为太多Bug导致使用本软件会导致你的电脑蓝屏。~~**<br>
 **因为我叫蓝屏钙啊！**
-###使用的其他开源项目
+### 使用的其他开源项目
 **1.[WPF UI](https://github.com/lepoco/wpfui)  使用的协议：MIT license。<br>
 2.[Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) 使用的协议：MIT license。<br>
 以及其它未列举出来的。<br>

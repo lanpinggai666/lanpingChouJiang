@@ -20,7 +20,7 @@
 当你点击它时，它会弹出一个框框<br>
 ![框框](./images/1.png)<br>
 当你右击它时，它会伸出一个菜单（生物特调是为了适应我们班的情况，发行版没有～）<br>
-![框框](./images/4.就pg)<br>
+![框框](./images/4.jpg)<br>
 当你点击关于时，它就会弹出一个窗口，，，里面可以设置一些东西<br>
 别问我为什么不叫设置，因为历史遗留。
 ![关于](./images/3.png)<br>
@@ -29,4 +29,8 @@
 **~~因为本人水平低，代码写得稀烂。因为太多Bug导致使用本软件会导致你的电脑蓝屏。~~**<br>
 **因为我叫蓝屏钙啊！**
 ###使用的其他开源项目
+**1.[WPF UI](https://github.com/lepoco/wpfui)  使用的协议：MIT license。
+2.[Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) 使用的协议：MIT license。
+以及其它未列举出来的。
+已经遵守各个开源项目的协议！**
 ### 给我点Star！！！

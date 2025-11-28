@@ -15,7 +15,7 @@
         WindowStartupLocation="Manual"
         Left="1650" Top="450"
         Topmost="true"
-        ShowInTaskbar="False" Icon="/headimg_dl.jpg">
+        ShowInTaskbar="True" Icon="/headimg_dl.jpg">
     
    
     <Border Background="#40000000" 
@@ -41,6 +41,8 @@
                     <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl"/>
                     <MenuItem Header="打开名单" Click="Open_mindan" />
                     <MenuItem Header="关闭点名不重复" Click="StudentsIsChecked" x:Name="IsCheced" />
+                   
+                    <MenuItem Header="一次抽N个" Click="test2"/>
                     <MenuItem Header="退出" Click="MenuItem_Exit_Click"/>
                    
                 </ContextMenu>

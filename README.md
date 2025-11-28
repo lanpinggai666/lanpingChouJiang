@@ -1,6 +1,6 @@
 # 蓝屏抽奖机
 **一个置顶在屏幕左侧中间方便老师在上课时点名的程序（你用来抽奖也行）。是鄙人的第一个作品。<br>
-使用WPF编写。运行需要.NET 8.0运行库。（虽然不知道这么简单的程序要运行库，但我真的不会其<br>
+使用WPF编写，拥有（伪）Fluent UI风格。运行需要.NET 8.0运行库。（虽然不知道这么简单的程序要运行库，但我真的不会其<br>
 他的啊😭😭😭）**
 ## Furters
 **✅点名<br>
@@ -29,8 +29,8 @@
 **~~因为本人水平低，代码写得稀烂。因为太多Bug导致使用本软件会导致你的电脑蓝屏。~~**<br>
 **因为我叫蓝屏钙啊！**
 ###使用的其他开源项目
-**1.[WPF UI](https://github.com/lepoco/wpfui)  使用的协议：MIT license。
-2.[Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) 使用的协议：MIT license。
-以及其它未列举出来的。
-已经遵守各个开源项目的协议！**
+**1.[WPF UI](https://github.com/lepoco/wpfui)  使用的协议：MIT license。<br>
+2.[Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) 使用的协议：MIT license。<br>
+以及其它未列举出来的。<br>
+已经遵守各个开源项目的协议！<br>**
 ### 给我点Star！！！

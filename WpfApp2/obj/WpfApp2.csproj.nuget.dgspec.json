@@ -1,24 +1,28 @@
 {
   "format": 1,
   "restore": {
-    "E:\\杂物\\a\\WpfApp2\\WpfApp2\\WpfApp2.csproj": {}
+    "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\WpfApp2\\WpfApp2.csproj": {}
   },
   "projects": {
-    "E:\\杂物\\a\\WpfApp2\\WpfApp2\\WpfApp2.csproj": {
-      "version": "1.2.0",
+    "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\WpfApp2\\WpfApp2.csproj": {
+      "version": "2.0.0",
       "restore": {
-        "projectUniqueName": "E:\\杂物\\a\\WpfApp2\\WpfApp2\\WpfApp2.csproj",
+        "projectUniqueName": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\WpfApp2\\WpfApp2.csproj",
         "projectName": "蓝屏抽奖机",
-        "projectPath": "E:\\杂物\\a\\WpfApp2\\WpfApp2\\WpfApp2.csproj",
+        "projectPath": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\WpfApp2\\WpfApp2.csproj",
         "packagesPath": "C:\\Users\\Amdox\\.nuget\\packages\\",
-        "outputPath": "E:\\杂物\\a\\WpfApp2\\WpfApp2\\obj\\",
+        "outputPath": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\WpfApp2\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "d:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
           "C:\\Users\\Amdox\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net8.0-windows"
+          "net8.0-windows7.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -26,7 +30,7 @@
         },
         "frameworks": {
           "net8.0-windows7.0": {
-            "targetAlias": "net8.0-windows",
+            "targetAlias": "net8.0-windows7.0",
             "projectReferences": {}
           }
         },
@@ -40,11 +44,17 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net8.0-windows7.0": {
-          "targetAlias": "net8.0-windows",
+          "targetAlias": "net8.0-windows7.0",
+          "dependencies": {
+            "WPF-UI": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -64,7 +74,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -20,7 +20,5 @@ E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\refint\蓝屏抽奖机.dl
 E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\蓝屏抽奖机.pdb
 E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\ref\蓝屏抽奖机.dll
 E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\WpfApp2.sourcelink.json
-E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\Page1.g.cs
 E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\Window1.g.cs
-E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\Page1.baml
 E:\杂物\a\WpfApp2\WpfApp2\obj\Release\net8.0-windows\Window1.baml

@@ -3,38 +3,47 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:WpfApp2"
         mc:Ignorable="d"
-        Title="选择人数" Height="200" Width="320"
-        Topmost="True"
+        Title="选择人数" Height="200" Width="350"
+        
         WindowStartupLocation="CenterScreen">
     <Grid>
         <TextBlock Text="选择人数" 
                    HorizontalAlignment="Center" 
                    VerticalAlignment="Center" 
                    FontSize="15"
-                   Margin="0,0,150,50"/>
+                   Margin="0,0,180,50"/>
         <ComboBox x:Name="NumberComboBox" 
-          Width="100" 
-          Height="20"
+          Width="150" 
+          Height="35"
           VerticalContentAlignment="Center"
-                  Margin="50,0,0,50"
+                  Margin="80,0,18,50"
                 SelectedIndex="0"  />
         <Button Name="确定"
                 Content="确定" 
-                Width="80" 
+                Width="150" 
                 Height="30" 
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Bottom" 
-                Margin="0,0,190,30"
-    Click="OK"></Button>
+                Margin="0,0,180,20"
+    Click="OK" Foreground="#E4FFFFFF"
+                >
+            <Button.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#0f6cbd" Offset="0.0"/>
+                   
+                </LinearGradientBrush>
+            </Button.Background>
+        </Button>
         <Button Name="取消"
                 Content="取消"
-                Width="80"
+                Width="150"
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Bottom" 
-                Margin="0,0,50,30"
+                Margin="0,0,10,20"
                 Height="30"
-                Click="Cancel"> </Button>
+                Click="Cancel"></Button>
     </Grid>
 </Window>

@@ -2,21 +2,24 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>headimg_dl_256x256.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>蓝屏抽奖机</AssemblyName>
-    <Version>1.2.0</Version>
+    <Version>2.0.0</Version>
     <Authors>蓝屏钙，好喝的钙</Authors>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>bin\Release\net8.0-windows\lanpinggai_CodeSigning.pfx</AssemblyOriginatorKeyFile>
+    <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="headimg_dl.jpg" />
+    <None Remove="test.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,7 +27,27 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Resource Include="headimg_dl.jpg" />
+    <Resource Include="test.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 
 </Project>

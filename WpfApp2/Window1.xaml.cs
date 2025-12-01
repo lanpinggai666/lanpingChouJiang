@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace WpfApp2
 {
@@ -89,7 +84,7 @@ namespace WpfApp2
 
             int studentsCount = allLines.Count;
 
-         
+
 
             if (studentsCount == 0)
             {
@@ -116,7 +111,7 @@ namespace WpfApp2
             // 读取已抽名单，过滤空项与占位 "test"
             var alreadyLines = File.ReadAllLines(AlreadyPath, Encoding.UTF8)
                                    .Select(s => s?.Trim())
-                                   .Where(s => !string.IsNullOrWhiteSpace(s) )
+                                   .Where(s => !string.IsNullOrWhiteSpace(s))
                                    .ToHashSet(StringComparer.Ordinal);
 
             // 可选池为尚未抽过的姓名
@@ -164,10 +159,16 @@ namespace WpfApp2
             string IsRestested = wasReset ? "已重置点名不重复\n" : string.Empty;
             string joined = string.Join(", ", picked);
 
-            MessageBox.Show($"{IsRestested}幸运儿： {joined} ({studentsCount})\n",
-                "抽奖结果",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            // MessageBox.Show($"{IsRestested}幸运儿： {joined} ({studentsCount})\n",
+            //      "抽奖结果",
+            //     MessageBoxButton.OK,
+            //    MessageBoxImage.Information);
+            Window3 w3 = new Window3();
+            w3.NewTittle = "抽奖结果";
+            w3.NewContent = $"幸运儿是：{joined}";
+            w3.New_extra_text = $"";
+            w3.ShowDialog();
+
 
             this.Close();
         }

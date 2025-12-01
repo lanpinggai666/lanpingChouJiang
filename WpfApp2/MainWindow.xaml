@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
         xmlns:local="clr-namespace:WpfApp1"
         mc:Ignorable="d"
         Title="抽奖工具" 
@@ -15,9 +16,10 @@
         WindowStartupLocation="Manual"
         Left="1650" Top="450"
         Topmost="true"
-        ShowInTaskbar="True" Icon="/headimg_dl.jpg">
-    
-   
+        ShowInTaskbar="False" Icon="/headimg_dl.jpg"
+        UseLayoutRounding="True">
+
+
     <Border Background="#40000000" 
             BorderThickness="1"
             BorderBrush="#40000000"
@@ -32,21 +34,60 @@
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
                 Cursor="Hand"
+                Height="120"
+                Width="60"
                >
             <Button.ContextMenu>
                 <ContextMenu>
-                    <MenuItem Header="关于" Click="MenuItem_About_Click"/>
-                    <MenuItem Header="重置点名不重复" Click="restart"/>
-                    <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy"/>
-                    <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl"/>
-                    <MenuItem Header="打开名单" Click="Open_mindan" />
-                    <MenuItem Header="关闭点名不重复" Click="StudentsIsChecked" x:Name="IsCheced" />
-                   
-                    <MenuItem Header="一次抽N个" Click="test2"/>
-                    <MenuItem Header="退出" Click="MenuItem_Exit_Click"/>
-                   
+                    <MenuItem Header="关于" Click="MenuItem_About_Click">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource about}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="重置点名不重复" Click="restart" >
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource re}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ic_fluent_person_48_regularDrawingImage}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ic_fluent_people_interwoven_48_regularDrawingImage}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="打开名单" Click="Open_mindan">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ic_fluent_folder_open_28_regularDrawingImage}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="关闭点名不重复" Click="StudentsIsChecked" x:Name="IsCheced">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ic_fluent_copy_32_regular_with_slash}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="生物特调" Click="Shengwu" x:Name="ShengwuName">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource rabbit}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="一次抽N个" Click="test2">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ic_fluent_people_48_regularDrawingImage}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="退出" Click="MenuItem_Exit_Click">
+                        <MenuItem.Icon>
+                            <Image Source="{StaticResource ic_fluent_dismiss_circle_48_regularDrawingImage}" Width="16" Height="16"/>
+                        </MenuItem.Icon>
+                    </MenuItem>
+
                 </ContextMenu>
-                
+
             </Button.ContextMenu>
 
             <!-- 按钮内容 -->
@@ -56,7 +97,7 @@
                     <TextBlock Name="resultText" 
                                Text="一键抽奖" 
                                Foreground="White" 
-                               FontSize="20"
+                               FontSize="21"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"
                                TextAlignment="Center"
@@ -66,10 +107,10 @@
                     <TextBlock x:Name="time" 
                                Text="" 
                                Foreground="White" 
-                               FontSize="15"
+                               FontSize="16"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Bottom"
-                               Margin="0,0,0,5"
+                               Margin="0,0,0,10"
                                TextAlignment="Center"
                                TextWrapping="Wrap"
                                FontWeight="Bold"/>

@@ -1,15 +1,11 @@
-﻿using Microsoft.VisualBasic;
-using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Reflection.Metadata;
+using System.Media;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using WpfApp2;
 
@@ -19,11 +15,11 @@ namespace WpfApp1
     {
         private const int HWND_TOPMOST = -1;
         private const int SWP_NOSIZE = 0x0001;
-        private const int SWP_NOMOVE = 0x0002;
+       private const int SWP_NOMOVE = 0x0002;
 
         // Win32 API 声明 - 新增的窗口样式相关常量和方法
-        [DllImport("user32.dll")]
-        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+       [DllImport("user32.dll")]
+       private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
         [DllImport("user32.dll", SetLastError = true)]
@@ -41,6 +37,7 @@ namespace WpfApp1
         public double screenHeight = SystemParameters.PrimaryScreenHeight;
         public bool AlreadyBe = true;
         public string Opened = string.Empty;
+        public bool ShengWu = false;
         private DispatcherTimer _clearTimer;
 
         public AWindow()
@@ -80,7 +77,7 @@ namespace WpfApp1
             _clearTimer.Interval = TimeSpan.FromMinutes(15);
             _clearTimer.Tick += ClearAlreadyFile;
 
-            // 订阅 SourceInitialized 事件来设置窗口样式和置顶
+             //订阅 SourceInitialized 事件来设置窗口样式和置顶
             this.SourceInitialized += AWindow_SourceInitialized;
 
             // 订阅会话切换事件（处理锁屏）
@@ -108,7 +105,7 @@ namespace WpfApp1
         // 处理锁屏/解锁事件
         private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
         {
-            switch (e.Reason)
+           switch (e.Reason)
             {
                 // 锁屏时取消置顶，避免遮挡登录界面
                 case Microsoft.Win32.SessionSwitchReason.SessionLock:
@@ -119,10 +116,10 @@ namespace WpfApp1
                     this.Topmost = true;
                     // 重新设置系统级置顶
                     var hwnd = new WindowInteropHelper(this).Handle;
-                    if (hwnd != IntPtr.Zero)
+                 if (hwnd != IntPtr.Zero)
                     {
-                        SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-                    }
+                     SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                   }
                     break;
             }
         }
@@ -134,7 +131,7 @@ namespace WpfApp1
             // 确保窗口保持置顶状态
             var hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd != IntPtr.Zero)
-            {
+           {
                 SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
             }
         }
@@ -189,9 +186,15 @@ namespace WpfApp1
             // w8.Show(); // 打开一个非模态窗口，两个窗口都可以操作
             w1.ShowDialog(); // 打开一个模态窗口，只有Window8窗口可以操作，Window9窗口不可操作
         }
-        
+
         void Only_Boy(object sender, EventArgs e)
         {
+            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
+            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
+            File.Delete(AlreadyPath);
+            File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+            ShengWu = false;
+            ShengwuName.Header = "开启生物特调";
             if (OnlyBoy == false)
             {
                 if (OnlyGirl == true)
@@ -214,6 +217,12 @@ namespace WpfApp1
 
         void Only_Girl(object sender, EventArgs e)
         {
+            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
+            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
+            File.Delete(AlreadyPath);
+            File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+            ShengWu = false;
+            ShengwuName.Header = "开启生物特调";
             if (OnlyGirl == false)
             {
                 if (OnlyBoy == true)
@@ -236,22 +245,66 @@ namespace WpfApp1
 
         void MenuItem_About_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("作者：蓝屏钙，好喝的钙\nCV高级工程师\n版本：v1.2.0\n邮箱：hy12121@outlook.com\nGitHub：https://github.com/lanpinggai666\n软件开源，禁止倒卖！",
-                "关于本软件",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
-        }
+            Window2 w2 = new Window2();
+            // w8.Show(); // 打开一个非模态窗口，两个窗口都可以操作
+            w2.Show();
 
+
+
+        }
+        void Shengwu(object sender, EventArgs e)
+        {
+            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
+            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
+            File.Delete(AlreadyPath);
+            File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+            if (OnlyBoy == false && OnlyGirl == false)
+            {
+                if (ShengWu == false)
+                {
+                    ShengWu = true;
+                    ShengwuName.Header = "关闭生物特调";
+
+                }
+                else
+                {
+                    ShengWu = false;
+                    ShengwuName.Header = "开启生物特调";
+                }
+            }
+            else
+            {
+                OnlyBoy = false;
+                OnlyGirl = false;
+                Boy.Header = "只抽男的";
+                Girl.Header = "只抽女的";
+                if (ShengWu == false)
+                {
+                    ShengWu = true;
+                    ShengwuName.Header = "关闭生物特调";
+                }
+                else
+                {
+                    ShengWu = false;
+                    ShengwuName.Header = "开启生物特调";
+                }
+
+            }
+        }
         void restart(object sender, RoutedEventArgs e)
         {
             string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
             string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
             File.Delete(AlreadyPath);
             File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
-            MessageBox.Show("已经重置点名不重复！",
-                "提示",
-                MessageBoxButton.OK,
-                MessageBoxImage.Information);
+            // MessageBox.Show("已经重置点名不重复！",
+            // "提示",
+            // MessageBoxButton.OK,
+            // MessageBoxImage.Information);
+            Window3 w3 = new Window3();
+            w3.NewTittle = "提示";
+            w3.NewContent = "已经重置点名不重复！";
+            w3.ShowDialog();
         }
 
         void StudentsIsChecked(object sender, RoutedEventArgs e)
@@ -293,29 +346,44 @@ namespace WpfApp1
             string Girl_path = System.IO.Path.Combine(mindanPath, "Girl_mindan.txt");
             string CountPath = System.IO.Path.Combine(mindanPath, "Count.txt");
             string AlreadyPath = System.IO.Path.Combine(mindanPath, "Already.txt");
+            string ShengWu_path = System.IO.Path.Combine(mindanPath, "Shengwu_mindan.txt");
             int AlreadylineCount = 0;
             int AlreadyBeCount = 0;
             string AlreadyName = string.Empty;
             string BoyOrGirl = string.Empty;
 
+            if (!Directory.Exists(mindanPath))
+            {
+                // 如果不存在，创建文件夹
+                Directory.CreateDirectory(mindanPath);
+            }
             if (OnlyBoy == true)
             {
                 path = Boy_path;
-                BoyOrGirl = "(只抽男生)";
+                BoyOrGirl = "只抽男生\n";
             }
             if (OnlyGirl == true)
             {
                 path = Girl_path;
-                BoyOrGirl = "(只抽女生)";
+                BoyOrGirl = "只抽女生\n";
             }
-
+            if (ShengWu == true)
+            {
+                path = ShengWu_path;
+                BoyOrGirl = "生物特调\n";
+            }
             if (!File.Exists(path))
             {
                 File.WriteAllText(path, "", Encoding.UTF8);
-                MessageBox.Show("检测到没有名单文件。已经自动创建文件。请在新创建的mindan.txt文件里输入名单，一行一个，不要有空格！",
-                    "文件不存在",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
+                //MessageBox.Show("检测到没有名单文件。已经自动创建文件。请在新创建的mindan.txt文件里输入名单，一行一个，不要有空格！",
+                //  "文件不存在",
+                // MessageBoxButton.OK,
+                //  MessageBoxImage.Information);
+                Window3 w3 = new Window3();
+                w3.NewTittle = "提示";
+                w3.NewContent = "未检测到名单文件，已经自动创建。";
+                
+                w3.ShowDialog();
 
                 Process process = new Process();
                 process.StartInfo.FileName = "notepad.exe";
@@ -361,17 +429,23 @@ namespace WpfApp1
                 string content = File.ReadAllText(CountPath, Encoding.UTF8).Trim();
                 int allstudentsCount = 0;
                 allstudentsCount = int.Parse(content);
-                if (allstudentsCount > studentsCount && OnlyBoy == false && OnlyGirl == false)
+                if (allstudentsCount > studentsCount && OnlyBoy == false && OnlyGirl == false && ShengWu == false)
                 {
                     File.SetAttributes(CountPath, File.GetAttributes(CountPath) & ~FileAttributes.Hidden);
                     File.WriteAllText(CountPath, studentsCount.ToString(), Encoding.UTF8);
                     File.SetAttributes(CountPath, File.GetAttributes(CountPath) | FileAttributes.Hidden);
                     int Truely_Students = 0;
                     Truely_Students = studentsCount++;
-                    MessageBox.Show($"发现名单学生数量减少！请检查名单！\n现在的学生数量: {Truely_Students}",
-                        "警告",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Warning);
+                    // MessageBox.Show($"发现名单学生数量减少！请检查名单！\n现在的学生数量: {Truely_Students}",
+                    //    "警告",
+                    //   MessageBoxButton.OK,
+                    //   MessageBoxImage.Warning);
+                    WarningMeassageBox w4 = new WarningMeassageBox();
+
+                    w4.errorNewContent = $"发现名单学生数量减少！请检查名单！\n现在的学生数量: {Truely_Students}";
+
+
+                    w4.ShowDialog();
                     Process process = new Process();
                     process.StartInfo.FileName = "notepad.exe";
                     process.StartInfo.Arguments = $"\"{path}\"";
@@ -386,11 +460,16 @@ namespace WpfApp1
 
                     if (studentsCount == 0)
                     {
-                        MessageBox.Show("名单文件是空的，请添加姓名后重新运行程序！",
-                            "空文件",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Warning);
+                        // MessageBox.Show("名单文件是空的，请添加姓名后重新运行程序！",
+                        //   "空文件",
+                        //   MessageBoxButton.OK,
+                        //  MessageBoxImage.Warning);
+                        WarningMeassageBox w4 = new WarningMeassageBox();
 
+                        w4.errorNewContent = "名单文件是空的，请添加姓名后重新运行程序！ ";
+
+
+                        w4.ShowDialog();
                         Process process = new Process();
                         process.StartInfo.FileName = "notepad.exe";
                         process.StartInfo.Arguments = $"\"{path}\"";
@@ -409,10 +488,16 @@ namespace WpfApp1
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"读取姓名时出现错误！请检查名单！\n错误信息: {ex.Message}",
-                            "错误",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                        // MessageBox.Show($"读取姓名时出现错误！请检查名单！\n错误信息: {ex.Message}",
+                        // "错误",
+                        //  MessageBoxButton.OK,
+                        //   MessageBoxImage.Error);
+                        WarningMeassageBox w4 = new WarningMeassageBox();
+                        
+                        w4.errorNewContent = $"读取姓名时出现错误！请检查名单！\n错误信息: {ex.Message}";
+
+
+                        w4.ShowDialog();
 
                         Process process = new Process();
                         process.StartInfo.FileName = "notepad.exe";
@@ -471,10 +556,17 @@ namespace WpfApp1
                     {
                         IsRestested = "已重置点名不重复\n";
                     }
-                    MessageBox.Show($"{IsRestested}幸运儿是{BoyOrGirl}：{studentsName}({studentsCount})\n{Opened}",
-                        "抽奖结果",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Information);
+                    // MessageBox.Show($"{IsRestested}幸运儿是{BoyOrGirl}：{studentsName}({studentsCount})\n{Opened}",
+                    //   "抽奖结果",
+                    //  MessageBoxButton.OK,
+                    //  MessageBoxImage.Information);
+
+                    Window3 w3 = new Window3();
+                    w3.NewTittle = "抽奖结果";
+                    w3.NewContent = $"幸运儿是：{studentsName}";
+                    w3.New_extra_text = $"{studentsCount}\n{BoyOrGirl}{IsRestested}{Opened}";
+                    w3.ShowDialog();
+
                     IsRestested = string.Empty;
                     if (AlreadyBe == true)
                     {

@@ -1,6 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 
 namespace WpfApp2
 {
@@ -23,13 +21,13 @@ namespace WpfApp2
 
             if (!ret)
             {
-                
-               Environment.Exit(0);
+
+                Environment.Exit(0);
             }
 
         }
     }
 }
-    
+
 
 

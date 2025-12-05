@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using lanpingcj.Views.Pages;
+using System.Windows;
+using System;
+using System.Speech.Synthesis;
 using Wpf.Ui.Controls;
-using WpfApp2.Views.Pages;
 
-namespace WpfApp2
+namespace lanpingcj
 {
     public partial class Window2 : FluentWindow
     {

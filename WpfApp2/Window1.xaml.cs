@@ -2,8 +2,9 @@
 using System.IO;
 using System.Text;
 using System.Windows;
+using Wpf.Ui.Controls;
 
-namespace WpfApp2
+namespace lanpingcj
 {
     /// <summary>
     /// Window1.xaml 的交互逻辑
@@ -58,9 +59,9 @@ namespace WpfApp2
             if (!File.Exists(path))
             {
                 File.WriteAllText(path, "", Encoding.UTF8);
-                MessageBox.Show("检测到没有名单文件。已经自动创建文件。请在新创建的mindan.txt文件里输入名单，一行一个，不要有空格！",
+                System.Windows.MessageBox.Show("检测到没有名单文件。已经自动创建文件。请在新创建的mindan.txt文件里输入名单，一行一个，不要有空格！",
                     "文件不存在",
-                    MessageBoxButton.OK,
+                 System.Windows.MessageBoxButton.OK,
                     MessageBoxImage.Information);
 
                 Process process = new Process();
@@ -88,9 +89,9 @@ namespace WpfApp2
 
             if (studentsCount == 0)
             {
-                MessageBox.Show("名单文件是空的，请添加姓名后重新运行程序！",
+                System.Windows.MessageBox.Show("名单文件是空的，请添加姓名后重新运行程序！",
                     "空文件",
-                    MessageBoxButton.OK,
+                    System.Windows.MessageBoxButton.OK,
                     MessageBoxImage.Warning);
 
                 Process process = new Process();
@@ -102,7 +103,7 @@ namespace WpfApp2
 
             if (NumberComboBox.SelectedItem == null)
             {
-                MessageBox.Show("请先选择抽取数量。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("请先选择抽取数量。", "提示", System.Windows.MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -159,14 +160,17 @@ namespace WpfApp2
             string IsRestested = wasReset ? "已重置点名不重复\n" : string.Empty;
             string joined = string.Join(", ", picked);
 
-            // MessageBox.Show($"{IsRestested}幸运儿： {joined} ({studentsCount})\n",
+            // System.Windows.MessageBox.Show($"{IsRestested}幸运儿： {joined} ({studentsCount})\n",
             //      "抽奖结果",
-            //     MessageBoxButton.OK,
+            //     System.Windows.MessageBoxButton.OK,
             //    MessageBoxImage.Information);
+            Properties.Settings.Default.IsMain = false;
+            Properties.Settings.Default.Save();
             Window3 w3 = new Window3();
             w3.NewTittle = "抽奖结果";
             w3.NewContent = $"幸运儿是：{joined}";
             w3.New_extra_text = $"";
+            
             w3.ShowDialog();
 
 

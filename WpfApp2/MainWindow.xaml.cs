@@ -1,25 +1,28 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Media;
 using System.Runtime.InteropServices;
+using System.Speech.Synthesis;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
-using WpfApp2;
+using Wpf.Ui;
+using Wpf.Ui.Controls;
 
-namespace WpfApp1
+namespace lanpingcj
 {
-    public partial class AWindow : Window
+    public partial class MainWindow : Window
     {
         private const int HWND_TOPMOST = -1;
         private const int SWP_NOSIZE = 0x0001;
-       private const int SWP_NOMOVE = 0x0002;
+        private const int SWP_NOMOVE = 0x0002;
 
         // Win32 API 声明 - 新增的窗口样式相关常量和方法
-       [DllImport("user32.dll")]
-       private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
         [DllImport("user32.dll", SetLastError = true)]
@@ -39,13 +42,16 @@ namespace WpfApp1
         public string Opened = string.Empty;
         public bool ShengWu = false;
         private DispatcherTimer _clearTimer;
+        public ContentDialogService _contentDialogService;
 
-        public AWindow()
+        public MainWindow()
         {
+
             int Width = 0;
             int Height = 0;
             InitializeComponent();
-
+            _contentDialogService = new ContentDialogService();
+            _contentDialogService.SetContentPresenter(RootContentDialogPresenter);
             // 设置不在任务栏显示
             ShowInTaskbar = false;
 
@@ -69,15 +75,12 @@ namespace WpfApp1
             //MessageBox.Show($"{Width},{Height}");
             this.Left = Width;
             this.Top = Height;
-            if (AlreadyBe == true)
-            {
-                Opened = "已开启点名不重复";
-            }
+
             _clearTimer = new DispatcherTimer();
-            _clearTimer.Interval = TimeSpan.FromMinutes(15);
+            _clearTimer.Interval = TimeSpan.FromMinutes(25);
             _clearTimer.Tick += ClearAlreadyFile;
 
-             //订阅 SourceInitialized 事件来设置窗口样式和置顶
+            //订阅 SourceInitialized 事件来设置窗口样式和置顶
             this.SourceInitialized += AWindow_SourceInitialized;
 
             // 订阅会话切换事件（处理锁屏）
@@ -105,7 +108,7 @@ namespace WpfApp1
         // 处理锁屏/解锁事件
         private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
         {
-           switch (e.Reason)
+            switch (e.Reason)
             {
                 // 锁屏时取消置顶，避免遮挡登录界面
                 case Microsoft.Win32.SessionSwitchReason.SessionLock:
@@ -116,10 +119,10 @@ namespace WpfApp1
                     this.Topmost = true;
                     // 重新设置系统级置顶
                     var hwnd = new WindowInteropHelper(this).Handle;
-                 if (hwnd != IntPtr.Zero)
+                    if (hwnd != IntPtr.Zero)
                     {
-                     SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-                   }
+                        SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                    }
                     break;
             }
         }
@@ -131,7 +134,7 @@ namespace WpfApp1
             // 确保窗口保持置顶状态
             var hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd != IntPtr.Zero)
-           {
+            {
                 SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
             }
         }
@@ -149,7 +152,7 @@ namespace WpfApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                //MessageBox.Show($"错误: {ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -166,7 +169,7 @@ namespace WpfApp1
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"读取文件时出错: {ex.Message}");
+                System.Windows.MessageBox.Show($"读取文件时出错: {ex.Message}");
                 return null;
             }
         }
@@ -291,41 +294,10 @@ namespace WpfApp1
 
             }
         }
-        void restart(object sender, RoutedEventArgs e)
-        {
-            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
-            File.Delete(AlreadyPath);
-            File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
-            // MessageBox.Show("已经重置点名不重复！",
-            // "提示",
-            // MessageBoxButton.OK,
-            // MessageBoxImage.Information);
-            Window3 w3 = new Window3();
-            w3.NewTittle = "提示";
-            w3.NewContent = "已经重置点名不重复！";
-            w3.ShowDialog();
-        }
 
-        void StudentsIsChecked(object sender, RoutedEventArgs e)
-        {
-            if (AlreadyBe == true)
-            {
-                IsCheced.Header = "打开点名不重复";
-                AlreadyBe = false;
-                Opened = string.Empty;
-            }
-            else
-            {
-                IsCheced.Header = "关闭点名不重复";
-                AlreadyBe = true;
-                Opened = "已开启点名不重复";
-            }
-            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
-            File.Delete(AlreadyPath);
-            File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
-        }
+
+
+
 
         void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
         {
@@ -336,8 +308,8 @@ namespace WpfApp1
         {
             time.Text = DateTime.Now.ToString("HH:mm");
         }
-
-        void button1_Click(object sender, EventArgs e)
+        
+        private async void button1_Click(object sender, EventArgs e)
         {
             int studentsCount;
             string mindanPath = System.IO.Path.Combine(documentsPath, "mindan");
@@ -351,6 +323,15 @@ namespace WpfApp1
             int AlreadyBeCount = 0;
             string AlreadyName = string.Empty;
             string BoyOrGirl = string.Empty;
+            bool Duplicatea = Properties.Settings.Default.Duplicate;
+            if (Duplicatea == true)
+            {
+                Opened = "已开启点名不重复";
+            }
+            else
+            {
+                Opened = "";
+            }
 
             if (!Directory.Exists(mindanPath))
             {
@@ -382,7 +363,7 @@ namespace WpfApp1
                 Window3 w3 = new Window3();
                 w3.NewTittle = "提示";
                 w3.NewContent = "未检测到名单文件，已经自动创建。";
-                
+
                 w3.ShowDialog();
 
                 Process process = new Process();
@@ -493,7 +474,7 @@ namespace WpfApp1
                         //  MessageBoxButton.OK,
                         //   MessageBoxImage.Error);
                         WarningMeassageBox w4 = new WarningMeassageBox();
-                        
+
                         w4.errorNewContent = $"读取姓名时出现错误！请检查名单！\n错误信息: {ex.Message}";
 
 
@@ -508,10 +489,10 @@ namespace WpfApp1
 
                     if (string.IsNullOrEmpty(studentsName))
                     {
-                        MessageBox.Show("读取到的姓名为空！请检查名单文件！",
+                        System.Windows.MessageBox.Show("读取到的姓名为空！请检查名单文件！",
                             "错误",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
+                            System.Windows.MessageBoxButton.OK,
+                            System.Windows.MessageBoxImage.Error);
                         return;
                     }
                     using (StreamReader sr = new StreamReader(AlreadyPath, Encoding.UTF8))
@@ -522,7 +503,7 @@ namespace WpfApp1
                         }
                     }
                     bool nameIsUnique = false;
-                    while (!nameIsUnique && AlreadyBe == true)
+                    while (!nameIsUnique && Duplicatea == true)
                     {
                         nameIsUnique = true;
 
@@ -544,7 +525,7 @@ namespace WpfApp1
                         }
 
                         // 添加安全机制，避免无限循环
-                        if (AlreadyBeCount++ > 100)  // 设置最大尝试次数
+                        if (AlreadyBeCount++ > lineCount)  // 设置最大尝试次数
                         {
                             //MessageBox.Show("尝试次数过多，可能所有学生都已被抽过");
                             break;
@@ -560,12 +541,22 @@ namespace WpfApp1
                     //   "抽奖结果",
                     //  MessageBoxButton.OK,
                     //  MessageBoxImage.Information);
+                    //bool IsMainWindow = Properties.Settings.Default.IsMain;
+                    Properties.Settings.Default.IsMain = true;
+                    Properties.Settings.Default.Save();
 
                     Window3 w3 = new Window3();
                     w3.NewTittle = "抽奖结果";
                     w3.NewContent = $"幸运儿是：{studentsName}";
                     w3.New_extra_text = $"{studentsCount}\n{BoyOrGirl}{IsRestested}{Opened}";
+                    w3.studentsName = $"{studentsName}";
                     w3.ShowDialog();
+                    
+
+                    // 订阅事件
+
+
+
 
                     IsRestested = string.Empty;
                     if (AlreadyBe == true)
@@ -582,6 +573,7 @@ namespace WpfApp1
                         _clearTimer.Stop(); // 先停止之前的计时器
                         _clearTimer.Start();
                     }
+
                 }
             }
         }

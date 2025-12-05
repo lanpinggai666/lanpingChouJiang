@@ -8,13 +8,14 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>headimg_dl_256x256.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>蓝屏抽奖机</AssemblyName>
+    <AssemblyName>lanpingcj</AssemblyName>
     <Version>2.0.0</Version>
     <Authors>蓝屏钙，好喝的钙</Authors>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>bin\Release\net8.0-windows\lanpinggai_CodeSigning.pfx</AssemblyOriginatorKeyFile>
     <RunAnalyzersDuringBuild>True</RunAnalyzersDuringBuild>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+    <RootNamespace>lanpingcj</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,11 +24,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <COMReference Include="SpeechLib">
+      <WrapperTool>tlbimp</WrapperTool>
+      <VersionMinor>4</VersionMinor>
+      <VersionMajor>5</VersionMajor>
+      <Guid>e6da930b-bba5-44df-ac6f-fe60c1eddec8</Guid>
+      <Lcid>0</Lcid>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>true</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="headimg_dl_256x256.ico" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Speech" Version="10.0.0" />
     <PackageReference Include="WPF-UI" Version="4.1.0" />
+    <PackageReference Include="WPF-UI.Abstractions" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,7 +51,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Settings.Designer.cs">
+    <Compile Update="Properties\Settings.Designer.cs">
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -44,7 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Settings.settings">
+    <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>

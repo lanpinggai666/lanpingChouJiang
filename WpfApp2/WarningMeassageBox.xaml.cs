@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using Wpf.Ui.Controls;
 
-namespace WpfApp2
+namespace lanpingcj
 {
     /// <summary>
     /// Window3.xaml 的交互逻辑
@@ -55,15 +55,15 @@ namespace WpfApp2
                 }
 
                 // 安全地设置图标
-               // if (errorIcon != null && ErrorIcon != null)
-               // {
-                   // errorIcon.Source = new BitmapImage(new Uri("pack://application:,,,/WpfApp2;component/imageres_1_98.ico"));
+                // if (errorIcon != null && ErrorIcon != null)
+                // {
+                // errorIcon.Source = new BitmapImage(new Uri("pack://application:,,,/lanpingcj;component/imageres_1_98.ico"));
                 //}
                 //else if (errorIcon != null)
-               // {
-                    // 如果未设置自定义图标，尝试使用默认图标
-                  //  TryLoadDefaultIcon();
-              //  }
+                // {
+                // 如果未设置自定义图标，尝试使用默认图标
+                //  TryLoadDefaultIcon();
+                //  }
 
                 // 计算文本所需高度并调整窗口
                 AdjustWindowHeight();
@@ -78,20 +78,20 @@ namespace WpfApp2
 
         private void TryLoadDefaultIcon()
         {
-            
-                try
-                {
-                    // 方法2: 使用WPF UI框架中的图标
-                    errorIcon.Source = FindResource("ErrorIcon") as ImageSource;
-                }
-                catch
-                {
-                    // 方法3: 隐藏图标
-                    errorIcon.Visibility = Visibility.Collapsed;
-                    System.Diagnostics.Debug.WriteLine("无法加载错误图标，已隐藏图标");
-                }
+
+            try
+            {
+                // 方法2: 使用WPF UI框架中的图标
+                errorIcon.Source = FindResource("ErrorIcon") as ImageSource;
             }
-        
+            catch
+            {
+                // 方法3: 隐藏图标
+                errorIcon.Visibility = Visibility.Collapsed;
+                System.Diagnostics.Debug.WriteLine("无法加载错误图标，已隐藏图标");
+            }
+        }
+
 
         private void AdjustWindowHeight()
         {

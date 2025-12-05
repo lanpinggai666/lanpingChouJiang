@@ -1,0 +1,60 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "蓝屏抽奖机/2.0.0": {
+        "dependencies": {
+          "WPF-UI": "4.1.0",
+          "WPF-UI.Abstractions": "4.1.0"
+        },
+        "runtime": {
+          "蓝屏抽奖机.dll": {}
+        }
+      },
+      "WPF-UI/4.1.0": {
+        "dependencies": {
+          "WPF-UI.Abstractions": "4.1.0"
+        },
+        "runtime": {
+          "lib/net10.0-windows7.0/Wpf.Ui.dll": {
+            "assemblyVersion": "4.1.0.0",
+            "fileVersion": "4.1.0.0"
+          }
+        }
+      },
+      "WPF-UI.Abstractions/4.1.0": {
+        "runtime": {
+          "lib/net10.0/Wpf.Ui.Abstractions.dll": {
+            "assemblyVersion": "4.1.0.0",
+            "fileVersion": "4.1.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "蓝屏抽奖机/2.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "WPF-UI/4.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-bL+ehJIgRl9bh8imYFJ33DsJrqcU6xfmbEBPlghW/jaBYtbCEDLfuxsEAVITYQjAxTJjPy+DT5vll3XOSCmHgQ==",
+      "path": "wpf-ui/4.1.0",
+      "hashPath": "wpf-ui.4.1.0.nupkg.sha512"
+    },
+    "WPF-UI.Abstractions/4.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-SzwdKzoA9ZlNXitVPUBAp79Pao5iRM/miny7/yIQGJwKzfx5bojjzNG4jV9B861ub5zer/AioDwCDc2cUpCoMA==",
+      "path": "wpf-ui.abstractions/4.1.0",
+      "hashPath": "wpf-ui.abstractions.4.1.0.nupkg.sha512"
+    }
+  }
+}

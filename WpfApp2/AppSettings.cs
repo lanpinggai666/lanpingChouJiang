@@ -1,9 +1,8 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace WpfApp2
+namespace lanpingcj
 {
     public static class AppSettings
     {

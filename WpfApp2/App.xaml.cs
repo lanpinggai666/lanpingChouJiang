@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace WpfApp2
+namespace lanpingcj
 {
     /// <summary>
     /// Interaction logic for App.xaml
@@ -16,15 +16,18 @@ namespace WpfApp2
 
         void App_Startup(object sender, StartupEventArgs e)
         {
-            bool ret;
-            mutex = new System.Threading.Mutex(true, "WpfApp2", out ret);
 
-            if (!ret)
+            try
             {
-
-                Environment.Exit(0);
+                bool ret;
+                mutex = new System.Threading.Mutex(true, "lanpingcj", out ret);
+                if (!ret) Environment.Exit(0);
             }
-
+            catch (Exception ex)
+            {
+                MessageBox.Show($"启动错误: {ex.Message}\n{ex.StackTrace}");
+                Environment.Exit(1);
+            }
         }
     }
 }

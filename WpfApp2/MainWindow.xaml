@@ -1,10 +1,10 @@
-﻿<Window x:Name="蓝屏抽奖机" x:Class="WpfApp1.AWindow"
+﻿<Window x:Name="蓝屏抽奖机" x:Class="lanpingcj.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-
-        xmlns:local="clr-namespace:WpfApp1"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:lanpingcj"
         mc:Ignorable="d"
         Title="抽奖工具" 
         Height="120" 
@@ -19,111 +19,66 @@
         ShowInTaskbar="False" Icon="/headimg_dl.jpg"
         UseLayoutRounding="True">
 
+    <Grid>
+        <!-- 添加 ContentPresenter 用于显示 ContentDialog -->
+        <ContentPresenter x:Name="RootContentDialogPresenter" />
 
-    <Border Background="#40000000" 
-            BorderThickness="1"
-            BorderBrush="#40000000"
-            CornerRadius="10,0,0,10">
-        <!-- 结果显示区域 -->
-        <Button Name="button1" 
-                Click="button1_Click" 
-                Background="Transparent"
-                BorderThickness="0"
-                Padding="0"
-                Margin="0"
-                HorizontalContentAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                Cursor="Hand"
-                Height="120"
-                Width="60"
-               >
-            <Button.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="关于" Click="MenuItem_About_Click">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource about}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="重置点名不重复" Click="restart" >
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource re}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource ic_fluent_person_48_regularDrawingImage}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
+        <Border Background="#40000000" 
+                BorderThickness="1"
+                BorderBrush="#40000000"
+                CornerRadius="10,0,0,10">
+            <!-- 结果显示区域 -->
+            <Button Name="button1" 
+                    Click="button1_Click" 
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
+                    Margin="0"
+                    HorizontalContentAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    Cursor="Hand"
+                    Height="120"
+                    Width="60">
+                <Button.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="关于" Click="MenuItem_About_Click" Icon="{ui:SymbolIcon Info20}"/>
+                       
+                        <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy" Icon="{ui:SymbolIcon Person20}"/>
+                        <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl" Icon="{ui:SymbolIcon Copy20}"/>
+                        <MenuItem Header="打开名单" Click="Open_mindan" Icon="{ui:SymbolIcon FolderOpen20}"/>
+                        <MenuItem Header="生物特调" Click="Shengwu" x:Name="ShengwuName" Icon="{ui:SymbolIcon AnimalRabbit20}"/>
+                        <MenuItem Header="一次抽N个" Click="test2" Icon="{ui:SymbolIcon People20}"/>
+                        <MenuItem Header="退出" Click="MenuItem_Exit_Click" Icon="{ui:SymbolIcon ArrowExit20}"/>
+                    </ContextMenu>
+                </Button.ContextMenu>
 
-                    <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource ic_fluent_people_interwoven_48_regularDrawingImage}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="打开名单" Click="Open_mindan">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource ic_fluent_folder_open_28_regularDrawingImage}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="关闭点名不重复" Click="StudentsIsChecked" x:Name="IsCheced">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource ic_fluent_copy_32_regular_with_slash}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="生物特调" Click="Shengwu" x:Name="ShengwuName">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource rabbit}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="一次抽N个" Click="test2">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource ic_fluent_people_48_regularDrawingImage}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-                    <MenuItem Header="退出" Click="MenuItem_Exit_Click">
-                        <MenuItem.Icon>
-                            <Image Source="{StaticResource ic_fluent_dismiss_circle_48_regularDrawingImage}" Width="16" Height="16"/>
-                        </MenuItem.Icon>
-                    </MenuItem>
-
-                </ContextMenu>
-
-            </Button.ContextMenu>
-
-            <!-- 按钮内容 -->
-            <Button.Content>
-                <Grid>
-                    <!-- 结果显示区域 - 充满整个按钮 -->
-                    <TextBlock Name="resultText" 
-                               Text="一键抽奖" 
-                               Foreground="White" 
-                               FontSize="21"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               FontWeight="Bold"
-                               Margin="0,0,0,15"/>
-                    <TextBlock x:Name="time" 
-                               Text="" 
-                               Foreground="White" 
-                               FontSize="16"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Bottom"
-                               Margin="0,0,0,10"
-                               TextAlignment="Center"
-                               TextWrapping="Wrap"
-                               FontWeight="Bold"/>
-
-                </Grid>
-            </Button.Content>
-
-
-
-
-
-
-
-        </Button>
-    </Border>
+                <!-- 按钮内容 -->
+                <Button.Content>
+                    <Grid>
+                        <!-- 结果显示区域 - 充满整个按钮 -->
+                        <TextBlock Name="resultText" 
+                                   Text="一键抽奖" 
+                                   Foreground="White" 
+                                   FontSize="21"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold"
+                                   Margin="0,0,0,15"/>
+                        <TextBlock x:Name="time" 
+                                   Text="" 
+                                   Foreground="White" 
+                                   FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Bottom"
+                                   Margin="0,0,0,10"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   FontWeight="Bold"/>
+                    </Grid>
+                </Button.Content>
+            </Button>
+        </Border>
+    </Grid>
 </Window>

@@ -88,7 +88,7 @@ namespace lanpingcj {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/lanpingcj;component/window3.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/lanpingcj;V2.0.0.0;component/window3.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\Window3.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

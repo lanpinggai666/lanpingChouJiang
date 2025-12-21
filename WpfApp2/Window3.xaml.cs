@@ -123,9 +123,18 @@ namespace lanpingcj
             {
                 if (!string.IsNullOrWhiteSpace(NewContent) && _synthesizer != null && TTS_open == true)
                 {
+                    _synthesizer.Rate = (int)0.5;
+                    _synthesizer.SelectVoice("Microsoft Yaoyao");
                     // 取消任何未完成的异步播放，避免重叠
                     _synthesizer.SpeakAsyncCancelAll();
                     _synthesizer.SpeakAsync(studentsName);
+                    
+                    foreach (var voice in _synthesizer.GetInstalledVoices())
+                    {
+                     //   System.Windows.MessageBox.Show(voice.VoiceInfo.Name);
+                        Debug.WriteLine($"语音名称: {voice.VoiceInfo.Name}");
+                    }
+
                 }
             }
             catch (Exception ex)

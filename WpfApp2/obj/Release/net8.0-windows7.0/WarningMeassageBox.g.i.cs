@@ -80,7 +80,7 @@ namespace lanpingcj {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/lanpingcj;component/warningmeassagebox.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/lanpingcj;V2.0.0.0;component/warningmeassagebox.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\WarningMeassageBox.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

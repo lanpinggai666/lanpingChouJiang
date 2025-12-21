@@ -1,16 +1,13 @@
-﻿using System.Diagnostics;
+﻿﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Speech.Synthesis;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Wpf.Ui;
-using Wpf.Ui.Controls;
 
 namespace lanpingcj
 {
@@ -41,17 +38,16 @@ namespace lanpingcj
         public bool AlreadyBe = true;
         public string Opened = string.Empty;
         public bool ShengWu = false;
+        public bool gailv = false; // 新增：概率平衡开关
         private DispatcherTimer _clearTimer;
         public ContentDialogService _contentDialogService;
 
         public MainWindow()
         {
-
             int Width = 0;
             int Height = 0;
             InitializeComponent();
-            _contentDialogService = new ContentDialogService();
-            _contentDialogService.SetContentPresenter(RootContentDialogPresenter);
+           
             // 设置不在任务栏显示
             ShowInTaskbar = false;
 
@@ -70,6 +66,7 @@ namespace lanpingcj
             string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
             File.Delete(AlreadyPath);
             File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+
             Width = (int)Math.Ceiling(screenWidth - 60);
             Height = (int)Math.Floor((screenHeight - 120) / 2);
             //MessageBox.Show($"{Width},{Height}");
@@ -85,6 +82,217 @@ namespace lanpingcj
 
             // 订阅会话切换事件（处理锁屏）
             Microsoft.Win32.SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+        }
+
+        // 新增：概率平衡开关方法
+        void Switch_Probability_Balance(object sender, EventArgs e)
+        {
+            bool gailv = Properties.Settings.Default.gailv1;
+            //gailv = !gailv;
+            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
+            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
+            File.Delete(AlreadyPath);
+            File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+
+            if (gailv)
+            {
+                // 初始化概率平衡数据到名单文件
+                InitializeProbabilityDataToFiles();
+
+                Window3 w3 = new Window3();
+                w3.NewTittle = "提示";
+                w3.NewContent = "概率平衡功能已开启";
+                w3.ShowDialog();
+            }
+            else
+            {
+                Window3 w3 = new Window3();
+                w3.NewTittle = "提示";
+                w3.NewContent = "概率平衡功能已关闭";
+                w3.ShowDialog();
+            }
+        }
+
+        // 新增：初始化概率平衡数据到名单文件
+        private void InitializeProbabilityDataToFiles()
+        {
+            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
+
+            // 处理所有可能的名单文件
+            string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
+
+            foreach (string file in files)
+            {
+                string filePath = System.IO.Path.Combine(MindanPath, file);
+                if (File.Exists(filePath))
+                {
+                    // 读取文件内容，为每行添加计数标记
+                    string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                    List<string> updatedLines = new List<string>();
+
+                    foreach (string line in lines)
+                    {
+                        if (!string.IsNullOrWhiteSpace(line))
+                        {
+                            // 如果行中已包含计数标记（格式：姓名#计数），则保留
+                            if (line.Contains("#"))
+                            {
+                                // 确保计数格式正确
+                                string[] parts = line.Split('#');
+                                if (parts.Length == 2 && int.TryParse(parts[1], out _))
+                                {
+                                    updatedLines.Add(line);
+                                }
+                                else
+                                {
+                                    updatedLines.Add($"{line.Trim()}#0");
+                                }
+                            }
+                            else
+                            {
+                                updatedLines.Add($"{line.Trim()}#0");
+                            }
+                        }
+                    }
+
+                    // 写回文件
+                    if (updatedLines.Count > 0)
+                    {
+                        File.WriteAllLines(filePath, updatedLines, Encoding.UTF8);
+                    }
+                }
+            }
+        }
+
+        // 新增：从名单文件中读取概率平衡数据
+        private Dictionary<string, int> ReadProbabilityDataFromFile(string filePath)
+        {
+            Dictionary<string, int> records = new Dictionary<string, int>();
+
+            if (File.Exists(filePath))
+            {
+                string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                foreach (string line in lines)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        // 解析格式：姓名#计数
+                        string[] parts = line.Split('#');
+                        if (parts.Length == 2)
+                        {
+                            string name = parts[0].Trim();
+                            if (int.TryParse(parts[1].Trim(), out int count))
+                            {
+                                records[name] = count;
+                            }
+                        }
+                        else if (parts.Length == 1)
+                        {
+                            // 如果没有计数标记，默认为0
+                            string name = parts[0].Trim();
+                            records[name] = 0;
+                        }
+                    }
+                }
+            }
+
+            return records;
+        }
+
+        // 新增：更新名单文件中的概率平衡数据
+        private void UpdateProbabilityDataInFile(string filePath, string studentName, Dictionary<string, int> records)
+        {
+            if (File.Exists(filePath))
+            {
+                string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                List<string> updatedLines = new List<string>();
+
+                foreach (string line in lines)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        string currentName = line.Split('#')[0].Trim();
+
+                        if (currentName == studentName)
+                        {
+                            // 更新被选中的学生的计数
+                            int newCount = records.ContainsKey(studentName) ? records[studentName] + 1 : 1;
+                            updatedLines.Add($"{studentName}#{newCount}");
+                        }
+                        else
+                        {
+                            // 保持原样
+                            updatedLines.Add(line);
+                        }
+                    }
+                }
+
+                // 写回文件
+                File.WriteAllLines(filePath, updatedLines, Encoding.UTF8);
+            }
+        }
+
+        // 新增：从名单文件中获取原始姓名列表（去除#计数部分）
+        private List<string> GetOriginalNamesFromFile(string filePath)
+        {
+            List<string> names = new List<string>();
+
+            if (File.Exists(filePath))
+            {
+                string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                foreach (string line in lines)
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        // 去除#及后面的计数部分
+                        string[] parts = line.Split('#');
+                        string name = parts[0].Trim();
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            names.Add(name);
+                        }
+                    }
+                }
+            }
+
+            return names;
+        }
+
+        // 新增：根据概率平衡选择学生
+        private string SelectStudentWithProbabilityBalance(string filePath, List<string> originalNames, Dictionary<string, int> records)
+        {
+            if (originalNames.Count == 0) return null;
+
+            // 计算每个学生的权重（被抽中次数越少，权重越高）
+            List<(string name, double weight)> weightedList = new List<(string, double)>();
+
+            foreach (string student in originalNames)
+            {
+                int count = records.ContainsKey(student) ? records[student] : 0;
+                double weight = 1.0 / (count + 1); // 基础权重公式，可根据需要调整
+                weightedList.Add((student, weight));
+            }
+
+            // 计算总权重
+            double totalWeight = weightedList.Sum(item => item.weight);
+
+            // 生成随机数
+            Random random = new Random();
+            double randomValue = random.NextDouble() * totalWeight;
+
+            // 根据权重选择学生
+            double cumulativeWeight = 0;
+            foreach (var item in weightedList)
+            {
+                cumulativeWeight += item.weight;
+                if (randomValue <= cumulativeWeight)
+                {
+                    return item.name;
+                }
+            }
+
+            // 如果由于浮点数精度问题没有返回，返回最后一个
+            return weightedList.Last().name;
         }
 
         // 新增的方法：设置窗口为工具窗口样式并置顶
@@ -295,10 +503,6 @@ namespace lanpingcj
             }
         }
 
-
-
-
-
         void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
         {
             Process.GetCurrentProcess().Kill();
@@ -308,8 +512,8 @@ namespace lanpingcj
         {
             time.Text = DateTime.Now.ToString("HH:mm");
         }
-        
-        private async void button1_Click(object sender, EventArgs e)
+
+        void button1_Click(object sender, EventArgs e)
         {
             int studentsCount;
             string mindanPath = System.IO.Path.Combine(documentsPath, "mindan");
@@ -319,6 +523,8 @@ namespace lanpingcj
             string CountPath = System.IO.Path.Combine(mindanPath, "Count.txt");
             string AlreadyPath = System.IO.Path.Combine(mindanPath, "Already.txt");
             string ShengWu_path = System.IO.Path.Combine(mindanPath, "Shengwu_mindan.txt");
+            bool gailv = Properties.Settings.Default.gailv1;
+
             int AlreadylineCount = 0;
             int AlreadyBeCount = 0;
             string AlreadyName = string.Empty;
@@ -353,13 +559,10 @@ namespace lanpingcj
                 path = ShengWu_path;
                 BoyOrGirl = "生物特调\n";
             }
+
             if (!File.Exists(path))
             {
                 File.WriteAllText(path, "", Encoding.UTF8);
-                //MessageBox.Show("检测到没有名单文件。已经自动创建文件。请在新创建的mindan.txt文件里输入名单，一行一个，不要有空格！",
-                //  "文件不存在",
-                // MessageBoxButton.OK,
-                //  MessageBoxImage.Information);
                 Window3 w3 = new Window3();
                 w3.NewTittle = "提示";
                 w3.NewContent = "未检测到名单文件，已经自动创建。";
@@ -417,10 +620,6 @@ namespace lanpingcj
                     File.SetAttributes(CountPath, File.GetAttributes(CountPath) | FileAttributes.Hidden);
                     int Truely_Students = 0;
                     Truely_Students = studentsCount++;
-                    // MessageBox.Show($"发现名单学生数量减少！请检查名单！\n现在的学生数量: {Truely_Students}",
-                    //    "警告",
-                    //   MessageBoxButton.OK,
-                    //   MessageBoxImage.Warning);
                     WarningMeassageBox w4 = new WarningMeassageBox();
 
                     w4.errorNewContent = $"发现名单学生数量减少！请检查名单！\n现在的学生数量: {Truely_Students}";
@@ -441,10 +640,6 @@ namespace lanpingcj
 
                     if (studentsCount == 0)
                     {
-                        // MessageBox.Show("名单文件是空的，请添加姓名后重新运行程序！",
-                        //   "空文件",
-                        //   MessageBoxButton.OK,
-                        //  MessageBoxImage.Warning);
                         WarningMeassageBox w4 = new WarningMeassageBox();
 
                         w4.errorNewContent = "名单文件是空的，请添加姓名后重新运行程序！ ";
@@ -458,21 +653,57 @@ namespace lanpingcj
                         return;
                     }
 
-                    Random random = new Random();
-                    int randomLineNumber = random.Next(0, studentsCount);
-
                     string studentsName;
                     try
                     {
-                        string[] allLines = File.ReadAllLines(path, Encoding.UTF8);
-                        studentsName = allLines[randomLineNumber];
+                        // 获取原始姓名列表（去除#计数部分）
+                        List<string> originalNames = GetOriginalNamesFromFile(path);
+                        int originalCount = originalNames.Count;
+
+                        if (originalCount == 0)
+                        {
+                            WarningMeassageBox w4 = new WarningMeassageBox();
+                            w4.errorNewContent = "名单文件是空的，请添加姓名后重新运行程序！";
+                            w4.ShowDialog();
+                            Process process = new Process();
+                            process.StartInfo.FileName = "notepad.exe";
+                            process.StartInfo.Arguments = $"\"{path}\"";
+                            process.Start();
+                            return;
+                        }
+
+                        // 新增：根据概率平衡开关选择学生
+                        if (gailv)
+                        {
+                            // 读取概率平衡数据
+                            Dictionary<string, int> probabilityRecords = ReadProbabilityDataFromFile(path);
+
+                            // 根据概率平衡算法选择学生
+                            studentsName = SelectStudentWithProbabilityBalance(path, originalNames, probabilityRecords);
+
+                            if (string.IsNullOrEmpty(studentsName))
+                            {
+                                // 如果概率平衡选择失败，使用随机选择
+                                Random random = new Random();
+                                int randomLineNumber = random.Next(0, originalCount);
+                                studentsName = originalNames[randomLineNumber];
+                            }
+                            else
+                            {
+                                // 更新名单文件中的概率平衡数据
+                                UpdateProbabilityDataInFile(path, studentsName, probabilityRecords);
+                            }
+                        }
+                        else
+                        {
+                            // 原随机选择逻辑（使用原始姓名列表）
+                            Random random = new Random();
+                            int randomLineNumber = random.Next(0, originalCount);
+                            studentsName = originalNames[randomLineNumber];
+                        }
                     }
                     catch (Exception ex)
                     {
-                        // MessageBox.Show($"读取姓名时出现错误！请检查名单！\n错误信息: {ex.Message}",
-                        // "错误",
-                        //  MessageBoxButton.OK,
-                        //   MessageBoxImage.Error);
                         WarningMeassageBox w4 = new WarningMeassageBox();
 
                         w4.errorNewContent = $"读取姓名时出现错误！请检查名单！\n错误信息: {ex.Message}";
@@ -516,10 +747,15 @@ namespace lanpingcj
                             if (alreadyLines[i] == studentsName)
                             {
                                 nameIsUnique = false;
-                                // 重新随机选择
-                                randomLineNumber = random.Next(0, studentsCount);
-                                string[] allLines = File.ReadAllLines(path, Encoding.UTF8);
-                                studentsName = allLines[randomLineNumber];
+                                // 重新随机选择（使用原始姓名列表）
+                                Random random = new Random();
+                                List<string> originalNames = GetOriginalNamesFromFile(path);
+                                int originalCount = originalNames.Count;
+                                if (originalCount > 0)
+                                {
+                                    int randomLineNumber = random.Next(0, originalCount);
+                                    studentsName = originalNames[randomLineNumber];
+                                }
                                 break;
                             }
                         }
@@ -537,21 +773,29 @@ namespace lanpingcj
                     {
                         IsRestested = "已重置点名不重复\n";
                     }
-                    // MessageBox.Show($"{IsRestested}幸运儿是{BoyOrGirl}：{studentsName}({studentsCount})\n{Opened}",
-                    //   "抽奖结果",
-                    //  MessageBoxButton.OK,
-                    //  MessageBoxImage.Information);
-                    //bool IsMainWindow = Properties.Settings.Default.IsMain;
-                    Properties.Settings.Default.IsMain = true;
-                    Properties.Settings.Default.Save();
+
+                    // 添加概率平衡状态显示
+                    string probabilityStatus = gailv ? "概率平衡已开启\n" : "";
+
+                    if (Properties.Settings.Default.tts == true)
+                    {
+                        Properties.Settings.Default.IsMain = true;
+                        Properties.Settings.Default.Save();
+                    }
+                    else
+                    {
+                        Properties.Settings.Default.IsMain = false;
+                        Properties.Settings.Default.Save();
+
+                    }
 
                     Window3 w3 = new Window3();
                     w3.NewTittle = "抽奖结果";
                     w3.NewContent = $"幸运儿是：{studentsName}";
-                    w3.New_extra_text = $"{studentsCount}\n{BoyOrGirl}{IsRestested}{Opened}";
+                    w3.New_extra_text = $"{studentsCount}\n{BoyOrGirl}{IsRestested}{probabilityStatus}{Opened}";
                     w3.studentsName = $"{studentsName}";
                     w3.ShowDialog();
-                    
+
 
                     // 订阅事件
 

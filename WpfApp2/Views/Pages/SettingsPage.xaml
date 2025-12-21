@@ -4,11 +4,14 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:local="clr-namespace:lanpingcj.Views.Pages"
       Title="设置"
       d:DesignHeight="450"
       d:DesignWidth="800"
       mc:Ignorable="d">
-
+    <Page.Resources>
+        <local:BooleanToOnOffConverter x:Key="BooleanToOnOffConverter"/>
+    </Page.Resources>
     <ScrollViewer>
         <StackPanel Margin="24">
             <ui:TextBlock
@@ -40,38 +43,80 @@
                 Text="关闭提示音，警告音不会被关闭" />
                     </Grid>
                 </ui:CardControl.Header>
-                <ComboBox x:Name="SoundComboBox"
-        MinWidth="200"
-        SelectionChanged="SoundComboBox_SelectionChanged">
-                    <ComboBoxItem Content="开启" />
-                    <ComboBoxItem Content="关闭" />
-                </ComboBox>
+                <StackPanel Orientation="Horizontal">
+                    <ui:ToggleSwitch x:Name="SoundToggleSwitch" 
+                                     Checked="SoundToggleSwitch_Checked"
+                                     Unchecked="SoundToggleSwitch_Unchecked"/>
+                    <TextBlock Text="{Binding ElementName=SoundToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"/>
+                </StackPanel>
             </ui:CardControl>
 
-            <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Copy20}">
-                <ui:CardControl.Header>
+            <ui:CardExpander Margin="0,0,0,12" ContentPadding="0" Icon="{ui:SymbolIcon Copy20}">
+                <ui:CardExpander.Header>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
                         <ui:TextBlock
-                Grid.Row="0"
-                FontTypography="Body"
-                Text="点名不重复" />
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    FontTypography="Body"
+                    Text="点名不重复" />
                         <ui:TextBlock
-                Grid.Row="1"
-                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                Text="关闭/开启点名不重复" />
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Foreground="#909090"
+                    Text="设置点名不重复" />
+                        <StackPanel Orientation="Horizontal"
+                                    Grid.Row="0"
+                                    Grid.RowSpan="2"
+                                    Grid.Column="1">
+                            <ui:ToggleSwitch x:Name="DuplicateToggleSwitch"
+                                         Checked="DuplicateToggleSwitch_Checked"
+                                         Unchecked="DuplicateToggleSwitch_Unchecked"/>
+                            <TextBlock Text="{Binding ElementName=DuplicateToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
+                                       VerticalAlignment="Center"
+                                       Margin="10,0,0,0"/>
+                        </StackPanel>
                     </Grid>
-                </ui:CardControl.Header>
-                <ComboBox x:Name="Duplicate"
-        MinWidth="200"
-        SelectionChanged="DuplicateComboBox_SelectionChanged">
-                    <ComboBoxItem Content="开启" />
-                    <ComboBoxItem Content="关闭" />
-                </ComboBox>
-            </ui:CardControl>
+                </ui:CardExpander.Header>
+                <Grid>
+                    
+                    <Grid Margin="16" >
+                        <Grid.ColumnDefinitions >
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="重置点名不重复" Margin="35,6,0,0" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ui:Button 
+        Grid.Column="1"
+        Width="150"
+        Content="重置"
+        Click="Restart"
+        Name="restart">
+                            </ui:Button>
+                        </Grid>
+
+
+                    </Grid>
+
+
+                </Grid>
+
+            </ui:CardExpander>
             <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon DesktopSpeaker20}">
                 <ui:CardControl.Header>
                     <Grid>
@@ -89,14 +134,16 @@
         Text="使用系统的智障TTS来读出名字" />
                     </Grid>
                 </ui:CardControl.Header>
-                <ComboBox x:Name="tts_open"
-                          MinWidth="200"
-                          SelectionChanged="ttsComboBox_SelectionChanged">
-                    <ComboBoxItem Content="开启" />
-                    <ComboBoxItem Content="关闭" />
-                </ComboBox>
+                <StackPanel Orientation="Horizontal">
+                    <ui:ToggleSwitch x:Name="TTSToggleSwitch"
+                                     Checked="TTSToggleSwitch_Checked"
+                                     Unchecked="TTSToggleSwitch_Unchecked"/>
+                    <TextBlock Text="{Binding ElementName=TTSToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"/>
+                </StackPanel>
             </ui:CardControl>
-            <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon ArrowClockwise20}">
+            <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Speaker228}">
                 <ui:CardControl.Header>
                     <Grid>
                         <Grid.RowDefinitions>
@@ -106,21 +153,24 @@
                         <ui:TextBlock
         Grid.Row="0"
         FontTypography="Body"
-        Text="重置" />
+        Text="平衡概率" />
                         <ui:TextBlock
         Grid.Row="1"
         Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-        Text="点击重置来重置点名不重复" />
+        Text="平衡概率功能" />
                     </Grid>
                 </ui:CardControl.Header>
-                <ui:Button 
-                    Width="200"
-                           Content="重置"
-                          Click="Restart"
-                          Name="重置"
-                    Appearance="Primary">
-                </ui:Button>
+                <StackPanel Orientation="Horizontal">
+                    <ui:ToggleSwitch x:Name="ProbabilityToggleSwitch"
+                                     Checked="ProbabilityToggleSwitch_Checked"
+                                     Unchecked="ProbabilityToggleSwitch_Unchecked"/>
+                    <TextBlock Text="{Binding ElementName=ProbabilityToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
+                               VerticalAlignment="Center"
+                               Margin="10,0,0,0"/>
+                </StackPanel>
             </ui:CardControl>
+            
+
 
             <!-- 关于信息 -->
             <ui:TextBlock
@@ -220,6 +270,7 @@
                     </Grid>
                 </StackPanel>
             </ui:CardExpander>
+            
         </StackPanel>
     </ScrollViewer>
 </Page>

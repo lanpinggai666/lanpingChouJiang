@@ -70,5 +70,17 @@ namespace lanpingcj.Properties {
                 this["IsMain"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool gailv1 {
+            get {
+                return ((bool)(this["gailv1"]));
+            }
+            set {
+                this["gailv1"] = value;
+            }
+        }
     }
 }

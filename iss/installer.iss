@@ -66,8 +66,8 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 ChangesAssociations=yes
 DisableProgramGroupPage=yes
-LicenseFile=..\LICENSE-2.0.txt
-InfoBeforeFile=..\update.txt
+LicenseFile=LICENSE-2.0.txt
+InfoBeforeFile=update.txt
 ; 取消注释以下行以在非管理安装模式下运行 (仅为当前用户安装)。
 ;PrivilegesRequired=lowest
 ; 注意：工作流中已经使用 /F 参数指定了输出文件名，这里可以保持固定或留空

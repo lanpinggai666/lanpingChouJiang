@@ -89,42 +89,43 @@ jobs:
           /p:DebugType=None `
           /p:DebugSymbols=false `
           -o ${{ env.Publish_Dir }}
-# 在 Publish Application 步骤后添加
-- name: Verify Publish Output
-  run: |
-    Write-Host "=== 验证发布输出 (${{ matrix.variant }}) ==="
-    $publishDir = "${{ env.Publish_Dir }}"
-    
-    if (Test-Path $publishDir) {
-      Write-Host "发布目录内容:"
-      Get-ChildItem -Path $publishDir -Recurse | Format-Table Name, Length, @{Name="Type";Expression={if($_.PSIsContainer){"目录"}else{"文件"}}}
-      
-      # 检查关键文件是否存在
-      $exePath = "$publishDir\${{ env.App_Exe_Name }}"
-      if (Test-Path $exePath) {
-        Write-Host "✓ 主程序文件存在: $(${{ env.App_Exe_Name }})"
-      } else {
-        Write-Warning "⚠️ 主程序文件不存在: $(${{ env.App_Exe_Name }})"
-        # 列出实际存在的exe文件
-        $exeFiles = Get-ChildItem -Path $publishDir -Filter "*.exe"
-        if ($exeFiles.Count -gt 0) {
-          Write-Host "找到的exe文件:"
-          $exeFiles | Format-Table Name
-        }
-      }
-    } else {
-      Write-Error "❌ 发布目录不存在: $publishDir"
-      
-      # 检查整个Publish目录结构
-      Write-Host "Publish目录结构:"
-      if (Test-Path "Publish") {
-        Get-ChildItem -Path "Publish" -Recurse | Format-Table FullName
-      } else {
-        Write-Host "Publish目录不存在"
-      }
-    }
 
-    # 验证发布文件
+    # 验证发布输出（新增的详细验证步骤）
+    - name: Verify Publish Output
+      run: |
+        Write-Host "=== 验证发布输出 (${{ matrix.variant }}) ==="
+        $publishDir = "${{ env.Publish_Dir }}"
+        
+        if (Test-Path $publishDir) {
+          Write-Host "发布目录内容:"
+          Get-ChildItem -Path $publishDir -Recurse | Format-Table Name, Length, @{Name="Type";Expression={if($_.PSIsContainer){"目录"}else{"文件"}}}
+          
+          # 检查关键文件是否存在
+          $exePath = "$publishDir\${{ env.App_Exe_Name }}"
+          if (Test-Path $exePath) {
+            Write-Host "✓ 主程序文件存在: $(${{ env.App_Exe_Name }})"
+          } else {
+            Write-Warning "⚠️ 主程序文件不存在: $(${{ env.App_Exe_Name }})"
+            # 列出实际存在的exe文件
+            $exeFiles = Get-ChildItem -Path $publishDir -Filter "*.exe"
+            if ($exeFiles.Count -gt 0) {
+              Write-Host "找到的exe文件:"
+              $exeFiles | Format-Table Name
+            }
+          }
+        } else {
+          Write-Error "❌ 发布目录不存在: $publishDir"
+          
+          # 检查整个Publish目录结构
+          Write-Host "Publish目录结构:"
+          if (Test-Path "Publish") {
+            Get-ChildItem -Path "Publish" -Recurse | Format-Table FullName
+          } else {
+            Write-Host "Publish目录不存在"
+          }
+        }
+
+    # 验证发布文件（原有的简要验证）
     - name: Verify published files
       run: |
         Write-Host "发布文件夹内容 (${{ matrix.variant }}):"
@@ -156,34 +157,35 @@ jobs:
         # 关键：明确告诉 PowerShell 此脚本执行成功
         exit 0
 
+    # 使用 ISCC 编译安装程序（已修正路径传递）
     - name: Compile Installer with ISCC
-  run: |
-    # 创建输出目录
-    New-Item -ItemType Directory -Force -Path ${{ env.Setup_Output_Dir }}
-    
-    # 验证发布目录是否存在
-    Write-Host "验证发布目录: ${{ env.Publish_Dir }}"
-    if (Test-Path "${{ env.Publish_Dir }}") {
-      Write-Host "✓ 发布目录存在"
-      Get-ChildItem -Path "${{ env.Publish_Dir }}" | Format-Table Name, Length
-    } else {
-      Write-Error "❌ 发布目录不存在: ${{ env.Publish_Dir }}"
-    }
-    
-    # 编译安装程序，传递正确的发布目录路径（相对于项目根目录）
-    # 注意：我们传递相对路径，ISS脚本会基于自身位置解析
-    $publishDirRelative = "..\${{ env.Publish_Dir }}"
-    Write-Host "传递给ISS脚本的发布目录: $publishDirRelative"
-    
-    iscc "${{ env.InnoSetup_Script }}" `
-      /O"${{ env.Setup_Output_Dir }}" `
-      /F"蓝屏抽奖机${{ matrix.output_suffix }}_${{ env.App_Version }}" `
-      /DMyAppVersion="${{ env.App_Version }}" `
-      /DConfiguration="${{ matrix.configuration }}" `
-      /DVariantName="${{ matrix.variant }}" `
-      /DPublishDir="$publishDirRelative" `
-      /DSelfContained="${{ matrix.self_contained }}" `
-      /DPublishSingleFile="${{ matrix.publish_single_file }}"
+      run: |
+        # 创建输出目录
+        New-Item -ItemType Directory -Force -Path ${{ env.Setup_Output_Dir }}
+        
+        # 验证发布目录是否存在
+        Write-Host "验证发布目录: ${{ env.Publish_Dir }}"
+        if (Test-Path "${{ env.Publish_Dir }}") {
+          Write-Host "✓ 发布目录存在"
+          Get-ChildItem -Path "${{ env.Publish_Dir }}" | Format-Table Name, Length
+        } else {
+          Write-Error "❌ 发布目录不存在: ${{ env.Publish_Dir }}"
+        }
+        
+        # 编译安装程序，传递正确的发布目录路径（相对于项目根目录）
+        # 注意：我们传递相对路径，ISS脚本会基于自身位置解析
+        $publishDirRelative = "..\${{ env.Publish_Dir }}"
+        Write-Host "传递给ISS脚本的发布目录: $publishDirRelative"
+        
+        iscc "${{ env.InnoSetup_Script }}" `
+          /O"${{ env.Setup_Output_Dir }}" `
+          /F"蓝屏抽奖机${{ matrix.output_suffix }}_${{ env.App_Version }}" `
+          /DMyAppVersion="${{ env.App_Version }}" `
+          /DConfiguration="${{ matrix.configuration }}" `
+          /DVariantName="${{ matrix.variant }}" `
+          /DPublishDir="$publishDirRelative" `
+          /DSelfContained="${{ matrix.self_contained }}" `
+          /DPublishSingleFile="${{ matrix.publish_single_file }}"
 
     # 验证生成的安装程序
     - name: Verify generated setup

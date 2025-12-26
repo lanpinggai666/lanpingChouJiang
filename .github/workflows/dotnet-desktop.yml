@@ -84,11 +84,36 @@ jobs:
         Get-ChildItem -Path "Publish\${{ env.App_Exe_Name }}" | Format-List
 
     # 安装 Inno Setup
+        # 安装 Inno Setup (增强版，处理已安装情况)
     - name: Install Inno Setup
       run: |
-        winget install --id JRSoftware.InnoSetup -e --accept-package-agreements --accept-source-agreements
+        # 尝试安装，并捕获可能的错误（如已安装且无更新）
+        & {
+          $ErrorActionPreference = 'Continue'
+          winget install --id JRSoftware.InnoSetup -e --accept-package-agreements --accept-source-agreements 2>&1
+        }
+        
+        # 无论上一步如何，都验证 Inno Setup 是否可用
         $innosetupPath = "${env:ProgramFiles(x86)}\Inno Setup 6"
-        echo "$innosetupPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        
+        # 检查 iscc.exe 是否存在
+        if (Test-Path "$innosetupPath\iscc.exe") {
+          Write-Host "✅ Inno Setup 已确认安装于: $innosetupPath"
+          # 将路径添加到当前工作流的 PATH 中，以便后续步骤使用
+          echo "$innosetupPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        } else {
+          # 如果找不到，则尝试更直接的安装方法（备用方案）
+          Write-Host "⚠️  未找到标准安装，尝试备用方案..."
+          $installerPath = "$env:TEMP\innosetup.exe"
+          Invoke-WebRequest -Uri "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe" -OutFile $installerPath
+          Start-Process -Wait -FilePath $installerPath -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -NoNewWindow
+          $innosetupPath = "${env:ProgramFiles(x86)}\Inno Setup 6"
+          echo "$innosetupPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        }
+        
+        # 最终验证
+        iscc /?
+        Write-Host "✅ Inno Setup 配置完成。"
 
     # 使用 ISCC 编译安装程序
     - name: Compile Installer with ISCC

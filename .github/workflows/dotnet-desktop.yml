@@ -90,51 +90,8 @@ jobs:
           /p:DebugSymbols=false `
           -o ${{ env.Publish_Dir }}
 
-    # 验证发布输出（新增的详细验证步骤）
-    - name: Verify Publish Output
-      run: |
-        Write-Host "=== 验证发布输出 (${{ matrix.variant }}) ==="
-        $publishDir = "${{ env.Publish_Dir }}"
-        
-        if (Test-Path $publishDir) {
-          Write-Host "发布目录内容:"
-          Get-ChildItem -Path $publishDir -Recurse | Format-Table Name, Length, @{Name="Type";Expression={if($_.PSIsContainer){"目录"}else{"文件"}}}
-          
-          # 检查关键文件是否存在
-          $exePath = "$publishDir\${{ env.App_Exe_Name }}"
-          if (Test-Path $exePath) {
-            Write-Host "✓ 主程序文件存在: $(${{ env.App_Exe_Name }})"
-          } else {
-            Write-Warning "⚠️ 主程序文件不存在: $(${{ env.App_Exe_Name }})"
-            # 列出实际存在的exe文件
-            $exeFiles = Get-ChildItem -Path $publishDir -Filter "*.exe"
-            if ($exeFiles.Count -gt 0) {
-              Write-Host "找到的exe文件:"
-              $exeFiles | Format-Table Name
-            }
-          }
-        } else {
-          Write-Error "❌ 发布目录不存在: $publishDir"
-          
-          # 检查整个Publish目录结构
-          Write-Host "Publish目录结构:"
-          if (Test-Path "Publish") {
-            Get-ChildItem -Path "Publish" -Recurse | Format-Table FullName
-          } else {
-            Write-Host "Publish目录不存在"
-          }
-        }
-
-    # 验证发布文件（原有的简要验证）
-    - name: Verify published files
-      run: |
-        Write-Host "发布文件夹内容 (${{ matrix.variant }}):"
-        Get-ChildItem -Path ${{ env.Publish_Dir }} -Recurse | Format-Table -Property Name, Length, LastWriteTime
-        
-        Write-Host "主程序文件 (${{ matrix.variant }}):"
-        Get-ChildItem -Path "${{ env.Publish_Dir }}\${{ env.App_Exe_Name }}" -ErrorAction SilentlyContinue | Format-List
-
-    # 安装 Inno Setup (静默且强制成功版)
+                        
+              # 安装 Inno Setup (静默且强制成功版)
     - name: Install Inno Setup
       run: |
         # 1. 首先检查 iscc 是否已在 PATH 中可用（例如，镜像已预装）

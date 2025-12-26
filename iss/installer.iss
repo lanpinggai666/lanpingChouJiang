@@ -72,7 +72,7 @@ InfoBeforeFile=update.txt
 ;PrivilegesRequired=lowest
 ; 注意：工作流中已经使用 /F 参数指定了输出文件名，这里可以保持固定或留空
 OutputBaseFilename=蓝屏抽奖机{#OutputSuffix}
-SetupIconFile=..\icon.ico
+SetupIconFile=icon.ico
 SolidCompression=yes
 WizardStyle=modern
 

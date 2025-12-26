@@ -124,6 +124,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
+                        
                         <ui:TextBlock
         Grid.Row="0"
         FontTypography="Body"
@@ -143,24 +144,33 @@
                                Margin="10,0,0,0"/>
                 </StackPanel>
             </ui:CardControl>
-            <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Speaker228}">
-                <ui:CardControl.Header>
+            <ui:CardExpander Margin="0,0,0,12" ContentPadding="0" Icon="{ui:SymbolIcon Scales20}">
+                <ui:CardExpander.Header>
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
                         <ui:TextBlock
-        Grid.Row="0"
-        FontTypography="Body"
-        Text="平衡概率" />
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            FontTypography="Body"
+                            Text="平衡概率" />
                         <ui:TextBlock
-        Grid.Row="1"
-        Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-        Text="平衡概率功能" />
-                    </Grid>
-                </ui:CardControl.Header>
-                <StackPanel Orientation="Horizontal">
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                            Text="通过累计次数来平衡每个人被抽到的概率" />
+                    
+                <StackPanel Orientation="Horizontal"
+                            Grid.Row="0"
+                            Grid.RowSpan="2"
+                            Grid.Column="1">
                     <ui:ToggleSwitch x:Name="ProbabilityToggleSwitch"
                                      Checked="ProbabilityToggleSwitch_Checked"
                                      Unchecked="ProbabilityToggleSwitch_Unchecked"/>
@@ -168,11 +178,43 @@
                                VerticalAlignment="Center"
                                Margin="10,0,0,0"/>
                 </StackPanel>
-            </ui:CardControl>
-            
+                </Grid>
+            </ui:CardExpander.Header>
+                <Grid>
+
+                    <Grid Margin="16" >
+                        <Grid.ColumnDefinitions >
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="重置概率" Margin="35,6,0,0" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ui:Button 
+                                Grid.Column="1"
+                                Width="150"
+                                Content="重置"
+                                Click="Reset_Probability"
+                                Name="reset_Probability">
+                            </ui:Button>
+                        </Grid>
 
 
-            <!-- 关于信息 -->
+                    </Grid>
+
+
+                </Grid>
+
+                </ui:CardExpander>
+
+
+
+
+                <!-- 关于信息 -->
             <ui:TextBlock
                 Margin="0,24,0,8"
                 FontTypography="BodyStrong"

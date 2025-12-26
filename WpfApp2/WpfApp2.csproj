@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Speech" Version="10.0.0" />
+    <PackageReference Include="System.Speech" Version="10.0.1" />
     <PackageReference Include="WPF-UI" Version="4.1.0" />
     <PackageReference Include="WPF-UI.Abstractions" Version="4.1.0" />
   </ItemGroup>

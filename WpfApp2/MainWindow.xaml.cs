@@ -775,7 +775,7 @@ namespace lanpingcj
                     }
 
                     // 添加概率平衡状态显示
-                    string probabilityStatus = gailv ? "概率平衡已开启\n" : "";
+                    
 
                     if (Properties.Settings.Default.tts == true)
                     {
@@ -792,7 +792,7 @@ namespace lanpingcj
                     Window3 w3 = new Window3();
                     w3.NewTittle = "抽奖结果";
                     w3.NewContent = $"幸运儿是：{studentsName}";
-                    w3.New_extra_text = $"{studentsCount}\n{BoyOrGirl}{IsRestested}{probabilityStatus}{Opened}";
+                    w3.New_extra_text = $"{studentsCount}\n{BoyOrGirl}{IsRestested}{Opened}";
                     w3.studentsName = $"{studentsName}";
                     w3.ShowDialog();
 

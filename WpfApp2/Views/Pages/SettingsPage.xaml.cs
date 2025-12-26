@@ -132,6 +132,93 @@ namespace lanpingcj.Views.Pages
         {
             SaveGailvSetting(true);
         }
+        // 新增：重置概率平衡数据方法
+        private void Reset_Probability(object sender, EventArgs e)
+        {
+            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
+
+            // 处理所有可能的名单文件
+            string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
+
+            bool anyFileProcessed = false;
+
+            foreach (string file in files)
+            {
+                string filePath = System.IO.Path.Combine(MindanPath, file);
+                if (File.Exists(filePath))
+                {
+                    try
+                    {
+                        // 读取文件内容
+                        string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
+                        List<string> cleanedLines = new List<string>();
+
+                        // 处理每一行，删除#和后面的数字
+                        foreach (string line in lines)
+                        {
+                            if (!string.IsNullOrWhiteSpace(line))
+                            {
+                                // 查找#的位置
+                                int hashIndex = line.IndexOf('#');
+                                if (hashIndex >= 0)
+                                {
+                                    // 只保留#之前的部分（姓名）
+                                    string cleanedName = line.Substring(0, hashIndex).Trim();
+                                    if (!string.IsNullOrEmpty(cleanedName))
+                                    {
+                                        cleanedLines.Add(cleanedName);
+                                    }
+                                }
+                                else
+                                {
+                                    // 如果没有#，保留原样
+                                    cleanedLines.Add(line.Trim());
+                                }
+                            }
+                        }
+
+                        // 写回文件
+                        if (cleanedLines.Count > 0)
+                        {
+                            File.WriteAllLines(filePath, cleanedLines, Encoding.UTF8);
+                            anyFileProcessed = true;
+                        }
+                        else
+                        {
+                            // 如果文件为空，写入空文件
+                            File.WriteAllText(filePath, "", Encoding.UTF8);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // 错误处理
+                        Window3 w3 = new Window3();
+                        w3.NewTittle = "错误";
+                        w3.NewContent = $"处理文件 {file} 时出错: {ex.Message}";
+                        w3.ShowDialog();
+                        return;
+                    }
+                }
+            }
+
+            // 显示结果
+            Window3 resultWindow = new Window3();
+            resultWindow.NewTittle = "提示";
+
+            if (anyFileProcessed)
+            {
+                resultWindow.NewContent = "概率平衡数据已重置成功，所有计数已清零！";
+            }
+            else
+            {
+                resultWindow.NewContent = "未找到任何名单文件，无需重置。";
+            }
+
+            resultWindow.ShowDialog();
+
+            
+            
+        }
 
         private void ProbabilityToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
         {

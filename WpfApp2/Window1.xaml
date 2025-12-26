@@ -7,7 +7,7 @@
         xmlns:local="clr-namespace:lanpingcj"
         mc:Ignorable="d"
         Title="选择人数" Height="200" Width="350"
-        
+        Topmost="True"
         WindowStartupLocation="CenterScreen">
     <Grid>
         <TextBlock Text="选择人数" 

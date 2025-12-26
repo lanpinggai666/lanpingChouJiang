@@ -5,16 +5,39 @@ using System.Windows;
 using System.Windows.Interop;
 using Wpf.Ui.Controls;
 using System.Speech.Synthesis;
+
 namespace lanpingcj
 {
     public partial class Window3 : Window, IDisposable
     {
+        // 常量定义
+        private const int HWND_TOPMOST = -1;
+        private const int SWP_NOSIZE = 0x0001;
+        private const int SWP_NOMOVE = 0x0002;
+
+        // Win32 API 声明 - 新增的窗口样式相关常量和方法
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        private const double TITLE_HEIGHT = 75;
+        private const double MIN_WINDOW_HEIGHT = 150;
+        private const double BOTTOM_BUTTON_HEIGHT = 60;
+        private const double TEXT_WIDTH = 290;
+        private const double DEFAULT_WINDOW_HEIGHT = 250;
+        private const int VOICE_RATE = 0; // 语音速率，0为正常速度
+        private const string DEFAULT_VOICE_NAME = "Microsoft Yaoyao";
+
         public string NewTittle { get; set; } = "默认标题";
         public string NewContent { get; set; } = "默认内容";
         public string New_extra_text { get; set; } = "";
         public string studentsName { get; set; } = "";
         public bool AutoApplyProperties { get; set; } = true;
-        //public bool IsWindow1 { get; set; }
 
         private bool _disposed = false;
         private IntPtr _hWnd;
@@ -32,34 +55,21 @@ namespace lanpingcj
             this.Unloaded += OnWindowUnloaded;
             this.Closed += OnWindowClosed;
 
-            if (SoundEnabled == true && IsMainWindow == false)
+            if (SoundEnabled && !IsMainWindow)
             {
                 try
                 {
-                    
-                    
-                        SystemSounds.Asterisk.Play();
-                    
-                        
-                    
+                    SystemSounds.Asterisk.Play();
                 }
-                catch (Exception ex)
+                catch (SystemException ex) // 使用更具体的异常类型
                 {
                     Debug.WriteLine($"播放声音失败: {ex.Message}");
+             
                 }
-            }
+                this.SourceInitialized += AWindow_SourceInitialized;
 
-            // 设置窗口圆角
-            try
-            {
-                _hWnd = new WindowInteropHelper(this).EnsureHandle();
-                var attribute = DWMWINDOWATTRIBUTE.DWMWA_WINDOW_CORNER_PREFERENCE;
-                var preference = DWM_WINDOW_CORNER_PREFERENCE.DWMWCP_ROUND;
-                DwmSetWindowAttribute(_hWnd, attribute, ref preference, sizeof(uint));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"设置窗口圆角失败: {ex.Message}");
+                // 订阅会话切换事件（处理锁屏）
+                Microsoft.Win32.SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
             }
 
             // 初始化语音合成器（非阻塞播放）
@@ -68,7 +78,7 @@ namespace lanpingcj
                 _synthesizer = new SpeechSynthesizer();
                 _synthesizer.SetOutputToDefaultAudioDevice();
             }
-            catch (Exception ex)
+            catch (SystemException ex)
             {
                 Debug.WriteLine($"初始化 SpeechSynthesizer 失败: {ex.Message}");
                 _synthesizer = null;
@@ -78,9 +88,60 @@ namespace lanpingcj
             {
                 this.Loaded += OnWindowLoaded;
             }
+        }
+        private void AWindow_SourceInitialized(object sender, EventArgs e)
+        {
+            // 获取窗口句柄
+            var hwnd = new WindowInteropHelper(this).Handle;
 
+            // 设置窗口扩展样式为工具窗口
+            int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            exStyle |= WS_EX_TOOLWINDOW;
+            SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+
+            // 设置窗口为系统级置顶
+            SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+
+            // 同时设置WPF的Topmost属性作为辅助
+            this.Topmost = true;
+        }
+        private void SystemEvents_SessionSwitch(object sender, Microsoft.Win32.SessionSwitchEventArgs e)
+        {
+            switch (e.Reason)
+            {
+                // 锁屏时取消置顶，避免遮挡登录界面
+                case Microsoft.Win32.SessionSwitchReason.SessionLock:
+                    this.Topmost = false;
+                    break;
+                // 解锁时恢复置顶
+                case Microsoft.Win32.SessionSwitchReason.SessionUnlock:
+                    this.Topmost = true;
+                    // 重新设置系统级置顶
+                    var hwnd = new WindowInteropHelper(this).Handle;
+                    if (hwnd != IntPtr.Zero)
+                    {
+                        SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+                    }
+                    break;
+            }
         }
 
+        // 窗口激活状态变化时重新确保置顶
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            // 确保窗口保持置顶状态
+            var hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd != IntPtr.Zero)
+            {
+                SetWindowPos(hwnd, (IntPtr)HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+            }
+        }
+        protected override void OnClosed(EventArgs e)
+        {
+            Microsoft.Win32.SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
+            base.OnClosed(e);
+        }
         private void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
             ApplyPropertiesToUI();
@@ -111,33 +172,50 @@ namespace lanpingcj
                 // 计算文本所需高度并调整窗口
                 AdjustWindowHeight();
             }
-            catch (Exception ex)
+            catch (SystemException ex)
             {
                 Debug.WriteLine($"应用属性到UI失败: {ex.Message}");
                 // 确保窗口至少能显示
-                this.Height = 250;
+                this.Height = DEFAULT_WINDOW_HEIGHT;
             }
 
             // 使用异步播放，避免阻塞 UI 线程
             try
             {
-                if (!string.IsNullOrWhiteSpace(NewContent) && _synthesizer != null && TTS_open == true)
+                if (!string.IsNullOrWhiteSpace(NewContent) && _synthesizer != null && TTS_open)
                 {
-                    _synthesizer.Rate = (int)0.5;
-                    _synthesizer.SelectVoice("Microsoft Yaoyao");
+                    _synthesizer.Rate = VOICE_RATE;
+                    
+                    // 安全地选择语音
+                    var availableVoices = _synthesizer.GetInstalledVoices();
+                    bool voiceFound = false;
+                    foreach (var voice in availableVoices)
+                    {
+                        if (voice.VoiceInfo.Name.Contains(DEFAULT_VOICE_NAME))
+                        {
+                            _synthesizer.SelectVoice(voice.VoiceInfo.Name);
+                            voiceFound = true;
+                            break;
+                        }
+                    }
+                    
+                    // 如果没有找到指定语音，使用默认语音
+                    if (!voiceFound)
+                    {
+                        Debug.WriteLine($"未找到语音 {DEFAULT_VOICE_NAME}，使用默认语音");
+                    }
+
                     // 取消任何未完成的异步播放，避免重叠
                     _synthesizer.SpeakAsyncCancelAll();
                     _synthesizer.SpeakAsync(studentsName);
                     
                     foreach (var voice in _synthesizer.GetInstalledVoices())
                     {
-                     //   System.Windows.MessageBox.Show(voice.VoiceInfo.Name);
                         Debug.WriteLine($"语音名称: {voice.VoiceInfo.Name}");
                     }
-
                 }
             }
-            catch (Exception ex)
+            catch (SystemException ex)
             {
                 Debug.WriteLine($"语音播放失败: {ex.Message}");
             }
@@ -154,45 +232,40 @@ namespace lanpingcj
                 }
 
                 // 测量文本所需高度
-                double titleHeight = 75; // 标题区域固定75像素
                 double contentHeight = 0;
                 double extraHeight = 0;
 
                 if (Context != null && Context.IsMeasureValid)
                 {
-                    Context.Measure(new Size(290, double.PositiveInfinity));
+                    Context.Measure(new Size(TEXT_WIDTH, double.PositiveInfinity));
                     contentHeight = Context.DesiredSize.Height;
                 }
 
                 if (extra_text != null && extra_text.IsMeasureValid)
                 {
-                    extra_text.Measure(new Size(290, double.PositiveInfinity));
+                    extra_text.Measure(new Size(TEXT_WIDTH, double.PositiveInfinity));
                     extraHeight = extra_text.DesiredSize.Height;
                 }
 
                 // 计算内容区域所需高度
-                double totalContentHeight = titleHeight + contentHeight + extraHeight + 40;
+                double totalContentHeight = TITLE_HEIGHT + contentHeight + extraHeight + 40;
 
                 // 确保最小高度
-                totalContentHeight = Math.Max(totalContentHeight, 150);
+                totalContentHeight = Math.Max(totalContentHeight, MIN_WINDOW_HEIGHT);
 
-                // 设置窗口高度 = 内容高度 + 底部按钮区域高度(60)
-                this.Height = totalContentHeight + 60;
+                // 设置窗口高度 = 内容高度 + 底部按钮区域高度
+                this.Height = totalContentHeight + BOTTOM_BUTTON_HEIGHT;
             }
-            catch (Exception ex)
+            catch (SystemException ex)
             {
                 Debug.WriteLine($"调整窗口高度失败: {ex.Message}");
                 // 使用默认高度
-                this.Height = 250;
+                this.Height = DEFAULT_WINDOW_HEIGHT;
             }
-
         }
 
         void OK(object sender, RoutedEventArgs e)
         {
-            // 清理事件处理程序
-
-
             // 清理数据绑定
             this.DataContext = null;
 
@@ -203,8 +276,6 @@ namespace lanpingcj
         private void OnWindowUnloaded(object sender, RoutedEventArgs e)
         {
         }
-        // 清理UI元素的数据绑定
-
 
         private void OnWindowClosed(object sender, EventArgs e)
         {
@@ -235,11 +306,6 @@ namespace lanpingcj
                     // 释放托管资源
                     try
                     {
-                        // 清理属性引用
-                        NewTittle = null;
-                        NewContent = null;
-                        New_extra_text = null;
-
                         // 清理UI元素引用
                         test_tittle = null;
                         Context = null;
@@ -258,12 +324,12 @@ namespace lanpingcj
                                 _synthesizer = null;
                             }
                         }
-                        catch (Exception ex)
+                        catch (SystemException ex)
                         {
                             Debug.WriteLine($"释放 SpeechSynthesizer 失败: {ex.Message}");
                         }
                     }
-                    catch (Exception ex)
+                    catch (SystemException ex)
                     {
                         Debug.WriteLine($"释放托管资源失败: {ex.Message}");
                     }

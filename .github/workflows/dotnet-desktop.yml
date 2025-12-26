@@ -1,4 +1,4 @@
-name: .NET Core Desktop
+name: .NET Core Desktop (Multiple Variants)
 
 on:
   push:
@@ -7,12 +7,27 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
-
     strategy:
       matrix:
-        configuration: [Release]  # 只构建 Release 版本用于打包
+        configuration: [Release]
+        include:
+          - variant: PortableSingleFile
+            publish_single_file: true
+            self_contained: false
+            output_suffix: _Portable_SingleFile
+          - variant: FullSingleFile
+            publish_single_file: true
+            self_contained: true
+            output_suffix: _Full_SingleFile
+          - variant: PortableFrameworkDependent
+            publish_single_file: false
+            self_contained: false
+            output_suffix: _Portable_FrameworkDependent
+          - variant: FullFrameworkDependent
+            publish_single_file: false
+            self_contained: true
+            output_suffix: _Full_FrameworkDependent
 
     runs-on: windows-latest
 
@@ -20,8 +35,9 @@ jobs:
       Solution_Name: WpfApp2.sln
       Project_Name: WpfApp2
       Project_Path: WpfApp2\WpfApp2.csproj
-      InnoSetup_Script: iss/installer.iss  # ISS 脚本路径
-      Setup_Output_Dir: SetupOutput
+      InnoSetup_Script: iss/installer.iss
+      Setup_Output_Dir: SetupOutput/${{ matrix.variant }}
+      Publish_Dir: Publish/${{ matrix.variant }}
       App_Version: 2.0.1.${{ github.run_number }}
       App_Exe_Name: lanpingcj.exe
 
@@ -60,30 +76,30 @@ jobs:
           /p:FileVersion=${{ env.App_Version }} `
           /p:Version=${{ env.App_Version }}
 
-    # 发布应用程序（单文件发布）
-    - name: Publish application
+    # 发布应用程序（根据矩阵参数动态配置）
+    - name: Publish Application (${{ matrix.variant }})
       run: |
         dotnet publish $env:Project_Path `
           -c ${{ matrix.configuration }} `
           -r win-x64 `
-          --self-contained false `
-          /p:PublishSingleFile=true `
+          --self-contained ${{ matrix.self_contained }} `
+          /p:PublishSingleFile=${{ matrix.publish_single_file }} `
           /p:IncludeNativeLibrariesForSelfExtract=true `
           /p:PublishReadyToRun=false `
           /p:DebugType=None `
           /p:DebugSymbols=false `
-          -o Publish
+          -o ${{ env.Publish_Dir }}
 
     # 验证发布文件
     - name: Verify published files
       run: |
-        Write-Host "发布文件夹内容:"
-        Get-ChildItem -Path Publish -Recurse | Format-Table -Property Name, Length, LastWriteTime
+        Write-Host "发布文件夹内容 (${{ matrix.variant }}):"
+        Get-ChildItem -Path ${{ env.Publish_Dir }} -Recurse | Format-Table -Property Name, Length, LastWriteTime
         
-        Write-Host "主程序文件:"
-        Get-ChildItem -Path "Publish\${{ env.App_Exe_Name }}" | Format-List
+        Write-Host "主程序文件 (${{ matrix.variant }}):"
+        Get-ChildItem -Path "${{ env.Publish_Dir }}\${{ env.App_Exe_Name }}" -ErrorAction SilentlyContinue | Format-List
 
-        # 安装 Inno Setup (静默且强制成功版)
+    # 安装 Inno Setup (静默且强制成功版)
     - name: Install Inno Setup
       run: |
         # 1. 首先检查 iscc 是否已在 PATH 中可用（例如，镜像已预装）
@@ -111,21 +127,25 @@ jobs:
       run: |
         # 创建输出目录
         New-Item -ItemType Directory -Force -Path ${{ env.Setup_Output_Dir }}
-        # 编译，使用环境变量中定义的 ISS 脚本路径
+        # 编译，使用环境变量中定义的 ISS 脚本路径，并传递变体参数
         iscc "${{ env.InnoSetup_Script }}" `
           /O"${{ env.Setup_Output_Dir }}" `
-          /F"蓝屏抽奖机_Setup_${{ env.App_Version }}" `
+          /F"蓝屏抽奖机${{ matrix.output_suffix }}_${{ env.App_Version }}" `
           /DMyAppVersion="${{ env.App_Version }}" `
-          /DConfiguration=Release
+          /DConfiguration="${{ matrix.configuration }}" `
+          /DVariantName="${{ matrix.variant }}" `
+          /DPublishDir="${{ env.Publish_Dir }}" `
+          /DSelfContained="${{ matrix.self_contained }}" `
+          /DPublishSingleFile="${{ matrix.publish_single_file }}"
 
     # 验证生成的安装程序
     - name: Verify generated setup
       run: |
-        Write-Host "生成的安装程序文件:"
-        Get-ChildItem -Path $env:Setup_Output_Dir -Recurse | Format-Table -Property Name, Length, LastWriteTime
+        Write-Host "生成的安装程序文件 (${{ matrix.variant }}):"
+        Get-ChildItem -Path ${{ env.Setup_Output_Dir }} -Recurse | Format-Table -Property Name, Length, LastWriteTime
         
         # 检查安装程序文件大小
-        $setupFiles = Get-ChildItem -Path $env:Setup_Output_Dir -Filter "*.exe" -Recurse
+        $setupFiles = Get-ChildItem -Path ${{ env.Setup_Output_Dir }} -Filter "*.exe" -Recurse
         foreach ($file in $setupFiles) {
           Write-Host "安装程序: $($file.Name), 大小: $([math]::Round($file.Length / 1MB, 2)) MB"
         }
@@ -134,9 +154,9 @@ jobs:
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.Project_Name }}-${{ matrix.configuration }}-${{ github.run_number }}
+        name: ${{ env.Project_Name }}-${{ matrix.variant }}-${{ github.run_number }}
         path: |
-          Publish
+          ${{ env.Publish_Dir }}
           ${{ env.Setup_Output_Dir }}
         retention-days: 30
 

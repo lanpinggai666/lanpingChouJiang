@@ -87,8 +87,8 @@ jobs:
         Get-ChildItem -Path "Publish\${{ env.App_Exe_Name }}" | Format-List
 
     # 使用 Inno Setup 插件编译安装程序
-    - name: Compile installer with Inno Setup
-      uses: ammaraskar/innosetup-action@v1
+    - name: Inno Setup Action
+      uses: Minionguyjpro/Inno-Setup-Action@v1.2.7
       with:
         # ISS 脚本路径
         script: ${{ env.InnoSetup_Script }}

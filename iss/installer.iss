@@ -49,37 +49,9 @@ Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; 根据 GitHub Actions 工作流配置调整路径
-; 方法1: 使用编译时的定义来构建正确的路径
-#ifndef Configuration
-  #define Configuration "Release"
-#endif
-
-#ifndef ProjectName
-  #define ProjectName "WpfApp2"
-#endif
-
-; 单文件发布模式（推荐）
-Source: "Publish\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Publish\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-Source: "Publish\*.json"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-Source: "Publish\*.config"; DestDir: "{app}"; Flags: ignoreversion
-; 如果需要包含运行时文件
-Source: "Publish\*.txt"; DestDir: "{app}"; Flags: ignoreversion
-
-; 或者方法2: 使用相对路径（适用于调试和发布）
-; Source: ".\WpfApp2\bin\{#Configuration}\net8.0-windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-
-; 或者方法3: 使用编译时定义的完整路径
-; #define SourcePath ".\WpfApp2\bin\{#Configuration}\net8.0-windows"
-; Source: "{#SourcePath}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-; Source: "{#SourcePath}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-
-; 包含必要的资源文件
-Source: "icon.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LICENSE-2.0.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "update.txt"; DestDir: "{app}"; Flags: ignoreversion
-
+; 关键：使用 “..\” 返回上一级目录（根目录），再进入 Publish
+Source: "..\Publish\lanpingcj.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\Publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 [Registry]
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey

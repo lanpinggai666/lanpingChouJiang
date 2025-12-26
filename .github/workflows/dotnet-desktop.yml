@@ -20,7 +20,7 @@ jobs:
       Solution_Name: WpfApp2.sln
       Project_Name: WpfApp2
       Project_Path: WpfApp2\WpfApp2.csproj
-      InnoSetup_Script: iss\installer.iss
+      InnoSetup_Script: iss/installer.iss
       Setup_Output_Dir: SetupOutput
       App_Version: 2.0.1.${{ github.run_number }}
       App_Exe_Name: lanpingcj.exe

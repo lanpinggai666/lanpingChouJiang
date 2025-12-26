@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <COMReference Include="SpeechLib">
+    <!--COMReference Include="SpeechLib">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>4</VersionMinor>
       <VersionMajor>5</VersionMajor>
@@ -33,7 +33,7 @@
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
       <EmbedInteropTypes>true</EmbedInteropTypes>
-    </COMReference>
+    </COMReference-->
   </ItemGroup>
 
   <ItemGroup>

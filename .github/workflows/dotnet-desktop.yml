@@ -75,7 +75,7 @@ jobs:
           -o Publish
           
         # 重命名可执行文件（如果需要）
-        Rename-Item -Path "Publish\WpfApp2.exe" -NewName "${{ env.App_Exe_Name }}"
+        
 
     # 验证发布文件
     - name: Verify published files

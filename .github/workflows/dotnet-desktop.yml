@@ -1,32 +1,22 @@
-name: 蓝屏抽奖机 - 四种分发版本
+name: 蓝屏抽奖机 - 安装程序打包
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
-  build:
+  build-and-package:
     strategy:
       matrix:
         variant: 
-          - name: PortableSingleFile
-            publish_single_file: true
-            self_contained: false
-            output_suffix: 便携单文件版
-          - name: FullSingleFile
-            publish_single_file: true
-            self_contained: true
-            output_suffix: 完整单文件版
           - name: PortableSetup
-            publish_single_file: false
+            publish_single_file: true
             self_contained: false
-            output_suffix: 便携框架版
+            output_suffix: 便携版
           - name: FullSetup
-            publish_single_file: false
+            publish_single_file: true
             self_contained: true
-            output_suffix: 完整框架版
+            output_suffix: 完整版
 
     runs-on: windows-latest
 
@@ -35,8 +25,6 @@ jobs:
       Project_Name: WpfApp2
       Project_Path: WpfApp2\WpfApp2.csproj
       InnoSetup_Script: iss/installer.iss
-      Setup_Output_Dir: Output/Setups
-      Publish_Dir: Output/${{ matrix.variant.name }}
       App_Version: 2.0.1.${{ github.run_number }}
       App_Exe_Name: lanpingcj.exe
 
@@ -54,8 +42,14 @@ jobs:
         dotnet restore $env:Solution_Name
         dotnet build $env:Solution_Name -c Release --no-restore
 
-    - name: Publish Application (${{ matrix.variant.output_suffix }})
+    - name: Publish for Setup
       run: |
+        # 清理并创建发布目录
+        $publishDir = "Publish\${{ matrix.variant.name }}"
+        if (Test-Path $publishDir) {
+          Remove-Item -Path $publishDir -Recurse -Force
+        }
+        
         dotnet publish $env:Project_Path `
           -c Release `
           -r win-x64 `
@@ -63,23 +57,13 @@ jobs:
           /p:PublishSingleFile=${{ matrix.variant.publish_single_file }} `
           /p:IncludeNativeLibrariesForSelfExtract=true `
           /p:PublishReadyToRun=false `
-          -o ${{ env.Publish_Dir }}
+          /p:DebugType=None `
+          /p:DebugSymbols=false `
+          -o $publishDir
         
-        Write-Host "✅ 发布完成: ${{ env.Publish_Dir }}"
-        Get-ChildItem -Path ${{ env.Publish_Dir }} | Format-Table Name, Length
-
-    - name: Copy Required Files to ISS Directory
-      run: |
-        # 复制ISS脚本所需的外部文件
-        $filesToCopy = @("LICENSE-2.0.txt", "update.txt", "icon.ico")
-        foreach ($file in $filesToCopy) {
-          if (Test-Path $file) {
-            Copy-Item -Path $file -Destination "iss\" -Force
-            Write-Host "✓ 已复制: $file"
-          } else {
-            Write-Warning "⚠️ 文件不存在: $file"
-          }
-        }
+        Write-Host "✅ 发布完成: $publishDir"
+        Write-Host "文件列表:"
+        Get-ChildItem -Path $publishDir | Format-Table Name, Length
 
     - name: Install Inno Setup
       run: |
@@ -91,36 +75,47 @@ jobs:
         }
         Write-Host "✅ Inno Setup 已就绪"
 
-    - name: Create Setup Installer (${{ matrix.variant.output_suffix }})
-      if: |
-        matrix.variant.name == 'PortableSetup' || 
-        matrix.variant.name == 'FullSetup'
+    - name: Prepare ISS Files
+      run: |
+        # 确保ISS目录存在
+        if (-not (Test-Path "iss")) {
+          New-Item -ItemType Directory -Force -Path "iss"
+        }
+        
+        # 复制ISS脚本需要的文件
+        $filesToCopy = @("LICENSE-2.0.txt", "update.txt", "icon.ico")
+        foreach ($file in $filesToCopy) {
+          if (Test-Path $file) {
+            Copy-Item -Path $file -Destination "iss\" -Force
+            Write-Host "✓ 已复制: $file"
+          } else {
+            Write-Warning "⚠️ 文件不存在: $file"
+          }
+        }
+
+    - name: Compile Setup (${{ matrix.variant.output_suffix }})
       run: |
         # 创建输出目录
-        New-Item -ItemType Directory -Force -Path ${{ env.Setup_Output_Dir }}
-        
-        # 计算相对路径（从iss目录到发布目录）
-        $publishDirRelative = "..\${{ env.Publish_Dir }}"
+        $setupDir = "Setups"
+        New-Item -ItemType Directory -Force -Path $setupDir
         
         # 编译安装程序
         iscc "${{ env.InnoSetup_Script }}" `
-          /O"${{ env.Setup_Output_Dir }}" `
+          /O"$setupDir" `
           /F"蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}" `
           /DMyAppVersion="${{ env.App_Version }}" `
           /DConfiguration="Release" `
           /DVariantName="${{ matrix.variant.name }}" `
-          /DPublishDir="$publishDirRelative" `
+          /DPublishDir="..\Publish\${{ matrix.variant.name }}" `
           /DSelfContained="${{ matrix.variant.self_contained }}" `
           /DPublishSingleFile="${{ matrix.variant.publish_single_file }}"
         
         Write-Host "✅ 安装程序已创建"
-        Get-ChildItem -Path ${{ env.Setup_Output_Dir }} -Filter "*.exe" | Format-Table Name, Length
+        Get-ChildItem -Path $setupDir -Filter "*.exe" | Format-Table Name, Length
 
-    - name: Upload Artifacts (${{ matrix.variant.output_suffix }})
+    - name: Upload Setup Artifact
       uses: actions/upload-artifact@v4
       with:
         name: 蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}
-        path: |
-          ${{ env.Publish_Dir }}
-          ${{ env.Setup_Output_Dir }}/蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}.exe
+        path: Setups/蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}.exe
         retention-days: 30

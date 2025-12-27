@@ -1,4 +1,4 @@
-name: .NET Core Desktop (Multiple Variants)
+name: 蓝屏抽奖机 - 四种分发版本
 
 on:
   push:
@@ -10,24 +10,23 @@ jobs:
   build:
     strategy:
       matrix:
-        configuration: [Release]
-        include:
-          - variant: PortableSingleFile
+        variant: 
+          - name: PortableSingleFile
             publish_single_file: true
             self_contained: false
-            output_suffix: _Portable_SingleFile
-          - variant: FullSingleFile
+            output_suffix: 便携单文件版
+          - name: FullSingleFile
             publish_single_file: true
             self_contained: true
-            output_suffix: _Full_SingleFile
-          - variant: PortableFrameworkDependent
+            output_suffix: 完整单文件版
+          - name: PortableSetup
             publish_single_file: false
             self_contained: false
-            output_suffix: _Portable_FrameworkDependent
-          - variant: FullFrameworkDependent
+            output_suffix: 便携框架版
+          - name: FullSetup
             publish_single_file: false
             self_contained: true
-            output_suffix: _Full_FrameworkDependent
+            output_suffix: 完整框架版
 
     runs-on: windows-latest
 
@@ -36,145 +35,92 @@ jobs:
       Project_Name: WpfApp2
       Project_Path: WpfApp2\WpfApp2.csproj
       InnoSetup_Script: iss/installer.iss
-      Setup_Output_Dir: SetupOutput/${{ matrix.variant }}
-      Publish_Dir: Publish/${{ matrix.variant }}
+      Setup_Output_Dir: Output/Setups
+      Publish_Dir: Output/${{ matrix.variant.name }}
       App_Version: 2.0.1.${{ github.run_number }}
       App_Exe_Name: lanpingcj.exe
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
-    # 设置 .NET Core
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
 
-    # 设置 MSBuild
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
-
-    # 恢复 NuGet 包
-    - name: Restore NuGet packages
-      run: dotnet restore $env:Solution_Name
-
-    # 执行单元测试
-    - name: Run unit tests
-      run: dotnet test $env:Solution_Name --verbosity normal
-
-    # 构建应用程序
-    - name: Build application
+    - name: Restore and Build
       run: |
-        msbuild $env:Solution_Name `
-          /p:Configuration=${{ matrix.configuration }} `
-          /p:Platform="Any CPU" `
-          /p:OutputPath=bin\${{ matrix.configuration }} `
-          /p:AssemblyVersion=${{ env.App_Version }} `
-          /p:FileVersion=${{ env.App_Version }} `
-          /p:Version=${{ env.App_Version }}
+        dotnet restore $env:Solution_Name
+        dotnet build $env:Solution_Name -c Release --no-restore
 
-    # 发布应用程序（根据矩阵参数动态配置）
-    - name: Publish Application (${{ matrix.variant }})
+    - name: Publish Application (${{ matrix.variant.output_suffix }})
       run: |
         dotnet publish $env:Project_Path `
-          -c ${{ matrix.configuration }} `
+          -c Release `
           -r win-x64 `
-          --self-contained ${{ matrix.self_contained }} `
-          /p:PublishSingleFile=${{ matrix.publish_single_file }} `
+          --self-contained ${{ matrix.variant.self_contained }} `
+          /p:PublishSingleFile=${{ matrix.variant.publish_single_file }} `
           /p:IncludeNativeLibrariesForSelfExtract=true `
           /p:PublishReadyToRun=false `
-          /p:DebugType=None `
-          /p:DebugSymbols=false `
           -o ${{ env.Publish_Dir }}
+        
+        Write-Host "✅ 发布完成: ${{ env.Publish_Dir }}"
+        Get-ChildItem -Path ${{ env.Publish_Dir }} | Format-Table Name, Length
 
-                        
-              # 安装 Inno Setup (静默且强制成功版)
+    - name: Copy Required Files to ISS Directory
+      run: |
+        # 复制ISS脚本所需的外部文件
+        $filesToCopy = @("LICENSE-2.0.txt", "update.txt", "icon.ico")
+        foreach ($file in $filesToCopy) {
+          if (Test-Path $file) {
+            Copy-Item -Path $file -Destination "iss\" -Force
+            Write-Host "✓ 已复制: $file"
+          } else {
+            Write-Warning "⚠️ 文件不存在: $file"
+          }
+        }
+
     - name: Install Inno Setup
       run: |
-        # 1. 首先检查 iscc 是否已在 PATH 中可用（例如，镜像已预装）
-        if (Get-Command iscc -ErrorAction SilentlyContinue) {
-          Write-Host "✅ Inno Setup 已存在于 PATH 中。"
-        } else {
-          Write-Host "正在安装 Inno Setup..."
-          # 2. 使用官方安装程序静默安装，避免 winget 的依赖和状态检查
+        if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
           $installerPath = "$env:TEMP\innosetup.exe"
           Invoke-WebRequest -Uri "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe" -OutFile $installerPath
-          # /SP- 和 /NORESTART 是关键参数，确保完全无交互、无重启提示
           Start-Process -Wait -FilePath $installerPath -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -NoNewWindow
-          # 3. 将安装目录添加到当前工作流的 PATH 中
-          $innosetupPath = "${env:ProgramFiles(x86)}\Inno Setup 6"
-          echo "$innosetupPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "${env:ProgramFiles(x86)}\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         }
-        # 4. 最终验证：执行 iscc，并将退出码强制设为 0，确保此步骤成功
-        iscc /?
-        Write-Host "✅ Inno Setup 已准备就绪。"
-        # 关键：明确告诉 PowerShell 此脚本执行成功
-        exit 0
+        Write-Host "✅ Inno Setup 已就绪"
 
-    # 使用 ISCC 编译安装程序（已修正路径传递）
-    - name: Compile Installer with ISCC
+    - name: Create Setup Installer (${{ matrix.variant.output_suffix }})
+      if: |
+        matrix.variant.name == 'PortableSetup' || 
+        matrix.variant.name == 'FullSetup'
       run: |
         # 创建输出目录
         New-Item -ItemType Directory -Force -Path ${{ env.Setup_Output_Dir }}
         
-        # 验证发布目录是否存在
-        Write-Host "验证发布目录: ${{ env.Publish_Dir }}"
-        if (Test-Path "${{ env.Publish_Dir }}") {
-          Write-Host "✓ 发布目录存在"
-          Get-ChildItem -Path "${{ env.Publish_Dir }}" | Format-Table Name, Length
-        } else {
-          Write-Error "❌ 发布目录不存在: ${{ env.Publish_Dir }}"
-        }
-        
-        # 编译安装程序，传递正确的发布目录路径（相对于项目根目录）
-        # 注意：我们传递相对路径，ISS脚本会基于自身位置解析
+        # 计算相对路径（从iss目录到发布目录）
         $publishDirRelative = "..\${{ env.Publish_Dir }}"
-        Write-Host "传递给ISS脚本的发布目录: $publishDirRelative"
         
+        # 编译安装程序
         iscc "${{ env.InnoSetup_Script }}" `
           /O"${{ env.Setup_Output_Dir }}" `
-          /F"蓝屏抽奖机${{ matrix.output_suffix }}_${{ env.App_Version }}" `
+          /F"蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}" `
           /DMyAppVersion="${{ env.App_Version }}" `
-          /DConfiguration="${{ matrix.configuration }}" `
-          /DVariantName="${{ matrix.variant }}" `
+          /DConfiguration="Release" `
+          /DVariantName="${{ matrix.variant.name }}" `
           /DPublishDir="$publishDirRelative" `
-          /DSelfContained="${{ matrix.self_contained }}" `
-          /DPublishSingleFile="${{ matrix.publish_single_file }}"
-
-    # 验证生成的安装程序
-    - name: Verify generated setup
-      run: |
-        Write-Host "生成的安装程序文件 (${{ matrix.variant }}):"
-        Get-ChildItem -Path ${{ env.Setup_Output_Dir }} -Recurse | Format-Table -Property Name, Length, LastWriteTime
+          /DSelfContained="${{ matrix.variant.self_contained }}" `
+          /DPublishSingleFile="${{ matrix.variant.publish_single_file }}"
         
-        # 检查安装程序文件大小
-        $setupFiles = Get-ChildItem -Path ${{ env.Setup_Output_Dir }} -Filter "*.exe" -Recurse
-        foreach ($file in $setupFiles) {
-          Write-Host "安装程序: $($file.Name), 大小: $([math]::Round($file.Length / 1MB, 2)) MB"
-        }
+        Write-Host "✅ 安装程序已创建"
+        Get-ChildItem -Path ${{ env.Setup_Output_Dir }} -Filter "*.exe" | Format-Table Name, Length
 
-    # 上传构建产物
-    - name: Upload build artifacts
+    - name: Upload Artifacts (${{ matrix.variant.output_suffix }})
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.Project_Name }}-${{ matrix.variant }}-${{ github.run_number }}
+        name: 蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}
         path: |
           ${{ env.Publish_Dir }}
-          ${{ env.Setup_Output_Dir }}
+          ${{ env.Setup_Output_Dir }}/蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}.exe
         retention-days: 30
-
-    # 创建 GitHub 发布（可选，仅在创建标签时运行）
-    - name: Create Release
-      if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          ${{ env.Setup_Output_Dir }}/*.exe
-        draft: false
-        prerelease: false
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

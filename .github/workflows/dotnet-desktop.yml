@@ -14,11 +14,11 @@ jobs:
           - name: PortableSetup
             publish_single_file: false
             self_contained: false
-            output_suffix: 便携框架版
+            output_suffix: 不带框架版
           - name: FullSetup
             publish_single_file: false
             self_contained: true
-            output_suffix: 完整框架版
+            output_suffix: 自带框架版
 
     runs-on: windows-latest
 

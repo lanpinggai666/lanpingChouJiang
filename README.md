@@ -2,6 +2,13 @@
 **一个置顶在屏幕左侧中间方便老师在上课时点名的程序（你用来抽奖也行）。是鄙人的第一个作品。<br>
 使用WPF编写，拥有（伪）Fluent UI风格。运行需要.NET 8.0运行库。（虽然不知道这么简单的程序要运行库，但我真的不会其<br>
 他的啊😭😭😭）**
+[![Stars](https://img.shields.io/github/stars/lanpinggai666/lanpingChouJiang?label=Stars)](https://github.com/lanpinggai666/lanpingChouJiang)
+[![正式版 Release](https://img.shields.io/github/v/release/lanpinggai666/lanpingChouJiang?style=flat-square&color=%233fb950&label=正式版)](https://github.com/lanpinggai666/lanpingChouJiang/releases/latest)
+[![测试版 Release](https://img.shields.io/github/v/release/lanpinggai666/lanpingChouJiang?include_prereleases&style=flat-square&label=测试版)](https://github.com/lanpinggai666/lanpingChouJiang/releases/)
+[![下载量](https://img.shields.io/github/downloads/lanpinggai666/lanpingChouJiang/total?style=social&label=下载量&logo=github)](https://github.com/lanpinggai666/lanpingChouJiang/releases/latest)<br/>
+![.NET 版本](https://img.shields.io/badge/.NET-8-512bd4?style=flat-square)
+![GitHub Repo size](https://img.shields.io/github/repo-size/lanpinggai666/lanpingChouJiang?style=flat-square&color=3cb371)
+[![GitHub Repo Languages](https://img.shields.io/github/languages/top/lanpinggai666/lanpingChouJiang?style=flat-square)](https://github.com/lanpinggai666/lanpingChouJiang/search?l=c%23)
 ## Features
 **✅点名<br>
 ✅只点女生<br>

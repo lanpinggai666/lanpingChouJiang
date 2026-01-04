@@ -111,7 +111,7 @@ Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueTyp
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
 Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
-Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "testrun"; ValueData: "{app}\{#MyAppExeName}"
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "lanpingChouJiangrun"; ValueData: "{app}\{#MyAppExeName}"
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}{#OutputSuffix}"; Filename: "{app}\{#MyAppExeName}"
@@ -122,18 +122,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 
 ; ========== 自定义代码部分（可选）==========
 [Code]
-// 显示安装配置信息
-procedure InitializeWizard();
-begin
-  // 在安装向导中添加一个信息页面或标签，显示当前变体信息
-  #ifdef VariantName
-    MsgBox('正在安装：' + '{#MyAppName}{#OutputSuffix}' + #13#10 +
-           '版本：' + '{#MyAppVersion}' + #13#10 +
-           '变体：' + '{#VariantName}' + #13#10 +
-           '配置：单文件=' + '{#PublishSingleFile}' + ', 自包含=' + '{#SelfContained}',
-           mbInformation, MB_OK);
-  #endif
-end;
+
 
 // 安装完成后的处理
 procedure CurStepChanged(CurStep: TSetupStep);

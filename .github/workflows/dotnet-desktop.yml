@@ -14,11 +14,11 @@ jobs:
           - name: PortableSetup
             publish_single_file: false
             self_contained: false
-            output_suffix: 不带框架版
+            output_suffix: WithoutRuntime
           - name: FullSetup
             publish_single_file: false
             self_contained: true
-            output_suffix: 自带框架版
+            output_suffix: WithRuntime
 
     runs-on: windows-latest
 
@@ -115,6 +115,6 @@ jobs:
     - name: Upload Setup Artifact (${{ matrix.variant.output_suffix }})
       uses: actions/upload-artifact@v4
       with:
-        name: 蓝屏抽奖机${{ matrix.variant.output_suffix }}${{ env.App_Version }}
+        name: lanpingchoujiang${{ matrix.variant.output_suffix }}
         path: ${{ env.Setup_Output_Dir }}/蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}.exe
         retention-days: 30

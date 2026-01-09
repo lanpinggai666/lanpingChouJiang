@@ -115,6 +115,6 @@ jobs:
     - name: Upload Setup Artifact (${{ matrix.variant.output_suffix }})
       uses: actions/upload-artifact@v4
       with:
-        name: 蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}
+        name: 蓝屏抽奖机${{ matrix.variant.output_suffix }}${{ env.App_Version }}
         path: ${{ env.Setup_Output_Dir }}/蓝屏抽奖机_${{ matrix.variant.output_suffix }}_${{ env.App_Version }}.exe
         retention-days: 30

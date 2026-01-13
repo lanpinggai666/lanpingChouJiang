@@ -23,9 +23,9 @@ jobs:
     runs-on: windows-latest
 
     env:
-      Solution_Name: WpfApp2.sln
-      Project_Name: WpfApp2
-      Project_Path: WpfApp2\WpfApp2.csproj
+      Solution_Name: lanpingChouJiang.sln
+      Project_Name: lanpingChouJiang
+      Project_Path: lanpingChouJiang\lanpingChouJiang.csproj
       InnoSetup_Script: iss/installer.iss
       Setup_Output_Dir: Output/Setups
       Publish_Dir: Publish/${{ matrix.variant.name }}

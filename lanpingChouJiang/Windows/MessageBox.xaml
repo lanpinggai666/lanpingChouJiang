@@ -1,0 +1,92 @@
+﻿<Window x:Class="lanpingcj.MessageBox"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow" 
+        Height="250" 
+        Width="400"
+        SizeToContent="Height"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        ShowInTaskbar="False"
+        Topmost="True"
+        Background="Transparent"
+        AllowsTransparency="True">
+    
+    <Border Background="White"
+            CornerRadius="8"
+            BorderBrush="#FFCCCCCC"
+            BorderThickness="1"
+            ClipToBounds="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="60"/>
+            </Grid.RowDefinitions>
+
+            <!-- 上部分 - 高度自适应 -->
+            <Border Grid.Row="0" Background="#FFFFFF" Padding="20,0,20,20" CornerRadius="8,8,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="75"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 测试标题 - 距离顶部75像素 -->
+                    <TextBlock Text="测试标题" 
+                           Grid.Row="0"
+                           HorizontalAlignment="Left" 
+                           VerticalAlignment="Top" 
+                           FontSize="22"
+                           Margin="0,35,0,0"
+                           TextWrapping="Wrap"
+                           MaxWidth="290"
+                           x:Name="test_tittle"/>
+
+                    <!-- 测试内容 - 在标题和额外内容之间垂直居中 -->
+                    <TextBlock Text="测试内容" 
+                           Grid.Row="1"
+                           HorizontalAlignment="Left" 
+                           VerticalAlignment="Center" 
+                           FontSize="16"
+                           TextWrapping="Wrap"
+                           MaxWidth="290"
+                           x:Name="Context"/>
+
+                    <!-- 额外内容 - 在上部分底部 -->
+                    <TextBlock Text=""
+                           Grid.Row="2"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Bottom"
+                           FontSize="8"
+                           Foreground="#FF969696"
+                           Margin="0,0,0,10"
+                           TextWrapping="Wrap"
+                           MaxWidth="290"
+                           x:Name="extra_text"/>
+                </Grid>
+            </Border>
+
+            <!-- 下部分 - 固定高度 -->
+            <Border Grid.Row="1" Background="#f3f3f3" CornerRadius="0,0,8,8">
+                <Button Name="确定"
+                    Content="确定" 
+                    Width="160" 
+                    Height="35" 
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Bottom" 
+                    Margin="0,0,10,12"
+                    Click="OK"
+                    Foreground="#E4FFFFFF">
+                    <Button.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#0f6cbd" Offset="0.0"/>
+                        </LinearGradientBrush>
+                    </Button.Background>
+                </Button>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

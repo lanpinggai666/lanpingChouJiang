@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "GWNSHg+2Muc=",
+  "success": true,
+  "projectFilePath": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\lanpingChouJiang.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Amdox\\.nuget\\packages\\system.speech\\10.0.1\\system.speech.10.0.1.nupkg.sha512",
+    "C:\\Users\\Amdox\\.nuget\\packages\\wpf-ui\\4.1.0\\wpf-ui.4.1.0.nupkg.sha512",
+    "C:\\Users\\Amdox\\.nuget\\packages\\wpf-ui.abstractions\\4.1.0\\wpf-ui.abstractions.4.1.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -21,7 +21,7 @@
 
     <Grid>
         <!-- 添加 ContentPresenter 用于显示 ContentDialog -->
-        
+        <ContentPresenter x:Name="RootContentDialogPresenter" Grid.Row="0" />
 
         <Border Background="#40000000" 
                 BorderThickness="1"

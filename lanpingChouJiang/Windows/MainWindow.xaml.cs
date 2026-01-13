@@ -9,6 +9,7 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using Wpf.Ui;
 using Wpf.Ui.Extensions;
+using Wpf.Ui.Controls;
 
 
 
@@ -178,24 +179,60 @@ namespace lanpingcj
             Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion);
             if (LatestVersion > ThisVersion)
             {
-                var contentDialogService = new ContentDialogService();
-                contentDialogService.SetContentPresenter(RootContentDialogPresenter);
+                var Dialog = new ContentDialog(RootContentDialogPresenter);
+                Dialog.Title = "有新版本可用!";
+                Dialog.Content = $"当前版本：{ThisVersion}\n最新版本：{LatestVersion}\n";
+                Dialog.PrimaryButtonText = "确定";
+                Dialog.CloseButtonText = "关闭";
+                Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;
+                Dialog.SecondaryButtonAppearance = ControlAppearance.Secondary;
+                var Dialogresult = await Dialog.ShowAsync();
+                switch (Dialogresult)
+                {
+                    case ContentDialogResult.Primary:
+                        
+                        break;
+                    case ContentDialogResult.None:
+                        // 用户点击了关闭按钮或按ESC
+                        break;
+                }
 
-                await _contentDialogService.ShowSimpleDialogAsync(
-                    new SimpleContentDialogCreateOptions()
-                    {
-                        Title = "检查更新",
-                        Content = ($"我们检查到了一个更新\n当前版本：{Properties.Settings.Default.ThisVersion}"),
-                        PrimaryButtonText = "Save",
-                        SecondaryButtonText = "Don't Save",
-                        CloseButtonText = "Cancel"
-                    }
-                    );
             }
 
 
            
             
+        }
+        public async Task DownloadUpdate()
+        {
+            string downloadUrl = "https://example.com/path/to/yourfile.exe";
+            string localFileName = "latest.exe";
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    Console.WriteLine("正在下载文件...");
+
+                    // 异步下载文件
+                    byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
+
+                    // 保存文件
+                    await File.WriteAllBytesAsync(localFileName, fileBytes);
+                    Console.WriteLine("下载完成！");
+                }
+
+                // 执行文件
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = localFileName,
+                    UseShellExecute = true  // 使用系统外壳执行
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"错误: {ex.Message}");
+            }
         }
 
         #region 构造函数

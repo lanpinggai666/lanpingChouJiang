@@ -30,8 +30,8 @@ namespace lanpingcj
         private const string DEFAULT_VOICE_NAME = "Microsoft Yaoyao";
 
         public string NewTittle { get; set; } 
-        public string NewContent { get; set; } = "测试内容";
-        public string New_extra_text { get; set; } = "测试内容";
+        public string NewContent { get; set; }
+        public string New_extra_text { get; set; } 
         public string studentsName { get; set; }
         public bool AutoApplyProperties { get; set; } = true;
 

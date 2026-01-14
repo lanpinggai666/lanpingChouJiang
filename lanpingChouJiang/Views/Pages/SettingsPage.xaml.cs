@@ -1,6 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -11,6 +13,7 @@ namespace lanpingcj.Views.Pages
    
     public partial class SettingsPage : Page
     {
+
         public string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         public class BooleanToOnOffConverter : IValueConverter
         {
@@ -24,6 +27,95 @@ namespace lanpingcj.Views.Pages
                 throw new NotImplementedException();
             }
         }
+        public async Task<(string Version, string Mandatory)> GetVersion()
+        {
+            string url = "https://gh.jasonzeng.dev/https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
+
+            using HttpClient client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(30);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
+
+            string content = await client.GetStringAsync(url);
+            Debug.WriteLine($"原始内容: {content}");
+
+            using StringReader reader = new StringReader(content);
+            string version = reader.ReadLine()?.Trim() ?? string.Empty;
+            string mandatory = reader.ReadLine()?.Trim() ?? string.Empty;
+
+            // 一次性返回两个值
+            return (version, mandatory);
+        }
+
+        // 调用时接收两个值
+        public async Task CheckUpdate()
+        {
+
+            var result = await GetVersion();
+
+
+
+            bool mandatory = bool.Parse(result.Mandatory);//强制更新
+            Version LatestVersion = new Version(result.Version);
+            Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion);
+            Debug.WriteLine($"当前版本: {ThisVersion}, 最新版本: {LatestVersion}, 强制更新: {mandatory}");
+            if (LatestVersion > ThisVersion)
+            {
+                var Dialog = new ContentDialog(RootContentDialogPresenter);
+
+                Dialog.Title = "有新版本可用!";
+                Dialog.Content = $"当前版本：{ThisVersion}\n最新版本：{LatestVersion}\n";
+                Dialog.PrimaryButtonText = "确定";
+                Dialog.CloseButtonText = "关闭";
+                Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;
+                Dialog.SecondaryButtonAppearance = ControlAppearance.Secondary;
+                var Dialogresult = await Dialog.ShowAsync();
+                switch (Dialogresult)
+                {
+                    case ContentDialogResult.Primary:
+                        await DownloadUpdate();
+                        break;
+                    case ContentDialogResult.None:
+                        // 用户点击了关闭按钮或按ESC
+                        break;
+                }
+
+            }
+
+
+
+
+        }
+        public async Task DownloadUpdate()
+        {
+            string downloadUrl = "https://lanpinggai66-my.sharepoint.com/personal/lanpinggai666_lanpinggai66_onmicrosoft_com/_layouts/52/download.aspx?share=IQDkSqcZUZCtQJOHJJN8yNrpAV2HSnKjGXBBRqOOkY2D4IQ";
+            string localFileName = "latest.exe";
+
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    Debug.WriteLine("正在下载文件...");
+
+                    // 异步下载文件
+                    byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
+
+                    // 保存文件
+                    await File.WriteAllBytesAsync(localFileName, fileBytes);
+                    Console.WriteLine("下载完成！");
+                }
+
+                // 执行文件
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = localFileName,
+                    UseShellExecute = true  // 使用系统外壳执行
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"错误: {ex.Message}");
+            }
+        }
         public SettingsPage()
         {
             InitializeComponent();
@@ -31,6 +123,7 @@ namespace lanpingcj.Views.Pages
             LoadDuplicateSetting();
             LoadTTSSetting();
             LoadgailvSetting();
+            version.Text=Properties.Settings.Default.ThisVersion;
         }
 
         // 加载当前声音设置

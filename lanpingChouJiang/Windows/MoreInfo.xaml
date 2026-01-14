@@ -22,7 +22,10 @@
     mc:Ignorable="d"
     Icon="/headimg_dl.jpg">
 
-    <Grid>
+    <!-- 确保 Grid 随窗口伸缩 -->
+    <Grid
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -37,7 +40,6 @@
                 <ui:BreadcrumbBar Margin="42,32,0,0" FontSize="28" FontWeight="DemiBold" />
             </ui:NavigationView.Header>
 
-            <!-- 只保留 Settings 菜单项 -->
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem
                     Content="设置"
@@ -51,8 +53,16 @@
         </ui:NavigationView>
 
         <ui:TitleBar
-    Title="蓝屏抽奖机"
-    
-            Icon="/headimg_dl.jpg"/>
+            Title="蓝屏抽奖机"
+            Icon="/headimg_dl.jpg"
+            Grid.Row="0"/>
+
+        <!-- 去掉固定宽高，使用 Stretch 使 ContentPresenter 与窗口同大 -->
+        <ContentPresenter
+            x:Name="RootContentDialogPresenter"
+            Grid.RowSpan="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            />
     </Grid>
 </ui:FluentWindow>

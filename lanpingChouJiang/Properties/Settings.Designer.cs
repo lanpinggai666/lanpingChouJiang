@@ -73,7 +73,7 @@ namespace lanpingcj.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool gailv1 {
             get {
                 return ((bool)(this["gailv1"]));
@@ -88,7 +88,7 @@ namespace lanpingcj.Properties {
         [global::System.Configuration.DefaultSettingValueAttribute("2.0.0")]
         public string ThisVersion {
             get {
-                return ((string)(this["thisversion"]));
+                return ((string)(this["ThisVersion"]));
             }
         }
     }

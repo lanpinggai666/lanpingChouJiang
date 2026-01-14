@@ -25,7 +25,10 @@
                 Margin="0,0,0,8"
                 FontTypography="BodyStrong"
                 Text="其它设置" />
-
+<Grid>
+                <ContentPresenter x:Name="RootContentDialogPresenter"
+                  />
+            </Grid>
             <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Speaker228}">
                 <ui:CardControl.Header>
                     <Grid>
@@ -240,7 +243,7 @@
                             Grid.Row="1"
                             Grid.Column="0"
                             Foreground="#909090"
-                            Text="一个基于WPF的Fluent UI风格（？）的抽奖程序" />
+                            Text="一个基于WPF并使用Fluent System Design 的抽奖程序" />
                         <TextBlock
                             Grid.Row="0"
                             Grid.RowSpan="2"
@@ -308,7 +311,9 @@
                         <TextBlock
                             Grid.Column="1"
                             Foreground="#909090"
-                            Text="v2.0.0" />
+                            Text="v2.0.0"
+                            x:Name="version"/>
+                        
                     </Grid>
                 </StackPanel>
             </ui:CardExpander>

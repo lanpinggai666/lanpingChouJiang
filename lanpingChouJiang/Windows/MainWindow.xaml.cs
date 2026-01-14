@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Toolkit.Uwp.Notifications;
+using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
@@ -8,8 +9,8 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Wpf.Ui;
-using Wpf.Ui.Extensions;
 using Wpf.Ui.Controls;
+using Wpf.Ui.Extensions;
 
 
 
@@ -149,14 +150,14 @@ namespace lanpingcj
         // 修改返回类型为元组
         public async Task<(string Version, string Mandatory)> GetVersion()
         {
-            string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/version";
+            string url = "https://gh.jasonzeng.dev/https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
 
             using HttpClient client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
 
             string content = await client.GetStringAsync(url);
-            Console.WriteLine($"原始内容: {content}");
+            Debug.WriteLine($"原始内容: {content}");
 
             using StringReader reader = new StringReader(content);
             string version = reader.ReadLine()?.Trim() ?? string.Empty;
@@ -177,62 +178,33 @@ namespace lanpingcj
             bool mandatory = bool.Parse(result.Mandatory);//强制更新
             Version LatestVersion = new Version(result.Version);
             Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion);
+            Debug.WriteLine($"当前版本: {ThisVersion}, 最新版本: {LatestVersion}, 强制更新: {mandatory}");
             if (LatestVersion > ThisVersion)
             {
-                var Dialog = new ContentDialog(RootContentDialogPresenter);
-                Dialog.Title = "有新版本可用!";
-                Dialog.Content = $"当前版本：{ThisVersion}\n最新版本：{LatestVersion}\n";
-                Dialog.PrimaryButtonText = "确定";
-                Dialog.CloseButtonText = "关闭";
-                Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;
-                Dialog.SecondaryButtonAppearance = ControlAppearance.Secondary;
-                var Dialogresult = await Dialog.ShowAsync();
-                switch (Dialogresult)
-                {
-                    case ContentDialogResult.Primary:
-                        
-                        break;
-                    case ContentDialogResult.None:
-                        // 用户点击了关闭按钮或按ESC
-                        break;
-                }
-
+               
+              //  MoreInfo MoreInfo = new MoreInfo();
+              //  MoreInfo.ShowDialog();
+                // Need to dispatch to UI thread if performing UI operations
+                
+                
+                   await ShowSimpleToast();
+                
+                
+               
+                  
+                
             }
 
 
            
             
         }
-        public async Task DownloadUpdate()
+        public async Task  ShowSimpleToast()
         {
-            string downloadUrl = "https://example.com/path/to/yourfile.exe";
-            string localFileName = "latest.exe";
-
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    Console.WriteLine("正在下载文件...");
-
-                    // 异步下载文件
-                    byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
-
-                    // 保存文件
-                    await File.WriteAllBytesAsync(localFileName, fileBytes);
-                    Console.WriteLine("下载完成！");
-                }
-
-                // 执行文件
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = localFileName,
-                    UseShellExecute = true  // 使用系统外壳执行
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"错误: {ex.Message}");
-            }
+            new ToastContentBuilder()
+                .AddText("新更新！")               // 主标题（加粗显示）
+                .AddText("我们检测到了一个新的更新，点击这个通知以获取")             // 副标题（正常字体）
+                .Show();                      // 立即显示
         }
 
         #region 构造函数
@@ -244,8 +216,7 @@ namespace lanpingcj
             int Width = 0;
             int Height = 0;
             InitializeComponent();
-
-            // 设置不在任务栏显示
+            
             ShowInTaskbar = false;
 
             // 创建并启动时间更新定时器
@@ -283,6 +254,13 @@ namespace lanpingcj
 
             // 订阅会话切换事件（处理锁屏）
             Microsoft.Win32.SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
+            this.Loaded += async (sender, e) =>
+            {
+
+                await CheckUpdate();
+            };
+            // Need to dispatch to UI thread if performing UI operations
+
         }
         #endregion
         #region 核心功能：WPF KeyDown事件处理

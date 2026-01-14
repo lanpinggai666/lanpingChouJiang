@@ -20,9 +20,7 @@
         UseLayoutRounding="True">
 
     <Grid>
-        <!-- 添加 ContentPresenter 用于显示 ContentDialog -->
         <ContentPresenter x:Name="RootContentDialogPresenter" Grid.Row="0" />
-
         <Border Background="#40000000" 
                 BorderThickness="1"
                 BorderBrush="#40000000"
@@ -44,7 +42,7 @@
                         <MenuItem Header="关于" Click="MenuItem_About_Click" Icon="{ui:SymbolIcon Info20}"/>
                        
                         <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy" Icon="{ui:SymbolIcon Person20}"/>
-                        <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl" Icon="{ui:SymbolIcon Copy20}"/>
+                        <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl" Icon="{ui:SymbolIcon Person20}"/>
                         <MenuItem Header="打开名单" Click="Open_mindan" Icon="{ui:SymbolIcon FolderOpen20}"/>
                         <MenuItem Header="生物特调" Click="Shengwu" x:Name="ShengwuName" Icon="{ui:SymbolIcon AnimalRabbit20}"/>
                         <MenuItem Header="一次抽N个" Click="Open_More_Man" Icon="{ui:SymbolIcon People20}"/>
@@ -80,5 +78,8 @@
                 </Button.Content>
             </Button>
         </Border>
+
+        <!-- ContentPresenter 放到最后，覆盖在最上层 -->
+
     </Grid>
 </Window>

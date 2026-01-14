@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("蓝屏钙，好喝的钙")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+766c69d62c64dd2afb34118d1607ba854d4797cf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.0.0+5f30b5d6b1541650cb882922d432458f437daa60")]
 [assembly: System.Reflection.AssemblyProductAttribute("lanpingcj")]
 [assembly: System.Reflection.AssemblyTitleAttribute("蓝屏抽奖机")]
 [assembly: System.Reflection.AssemblyVersionAttribute("2.0.0.0")]

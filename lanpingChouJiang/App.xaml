@@ -17,7 +17,6 @@
                 
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
-                <ResourceDictionary Source="Dictionary1.xaml"/>
               
 
 

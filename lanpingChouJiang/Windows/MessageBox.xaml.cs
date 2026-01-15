@@ -29,10 +29,10 @@ namespace lanpingcj
         private const int VOICE_RATE = 0; // 语音速率，0为正常速度
         private const string DEFAULT_VOICE_NAME = "Microsoft Yaoyao";
 
-        public string NewTittle { get; set; } 
-        public string NewContent { get; set; }
-        public string New_extra_text { get; set; } 
-        public string studentsName { get; set; }
+        public string? NewTittle { get; set; } 
+        public string? NewContent { get; set; }
+        public string? New_extra_text { get; set; } 
+        public string? studentsName { get; set; }
         public bool AutoApplyProperties { get; set; } = true;
 
         public bool TTS_open = Properties.Settings.Default.tts;
@@ -85,7 +85,7 @@ namespace lanpingcj
 
            
         }
-        private void AWindow_SourceInitialized(object sender, EventArgs e)
+        private void AWindow_SourceInitialized(object? sender, EventArgs e)
         {
             // 获取窗口句柄
             var hwnd = new WindowInteropHelper(this).Handle;

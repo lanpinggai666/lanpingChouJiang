@@ -24,12 +24,7 @@ namespace lanpingcj
                 ValueSet userInput = toastArgs.UserInput;
 
                 // Need to dispatch to UI thread if performing UI operations
-                Application.Current.Dispatcher.Invoke(delegate
-                {
-                    // TODO: Show the corresponding content
-                    MoreInfo MoreInfo = new MoreInfo();
-                    MoreInfo.ShowDialog();
-                });
+              
             };
         }
 

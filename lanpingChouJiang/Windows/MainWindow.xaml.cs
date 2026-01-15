@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using Windows.Foundation.Collections;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Extensions;
@@ -144,13 +145,13 @@ namespace lanpingcj
         // 清除定时器
         private DispatcherTimer _clearTimer;
 
-        // 内容对话框服务（可为空）
+
         public ContentDialogService? _contentDialogService;
         #endregion
-        // 修改返回类型为元组
+
         public async Task<(string Version, string Mandatory)> GetVersion()
         {
-            string url = "https://gh.jasonzeng.dev/https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
+            string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
 
             using HttpClient client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(30);
@@ -170,36 +171,36 @@ namespace lanpingcj
         // 调用时接收两个值
         public async Task CheckUpdate()
         {
-          
+
             var result = await GetVersion();
 
-           
-           
+
+
             bool mandatory = bool.Parse(result.Mandatory);//强制更新
             Version LatestVersion = new Version(result.Version);
             Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion);
             Debug.WriteLine($"当前版本: {ThisVersion}, 最新版本: {LatestVersion}, 强制更新: {mandatory}");
             if (LatestVersion > ThisVersion)
             {
-               
-              //  MoreInfo MoreInfo = new MoreInfo();
-              //  MoreInfo.ShowDialog();
+
+                //  MoreInfo MoreInfo = new MoreInfo();
+                //  MoreInfo.ShowDialog();
                 // Need to dispatch to UI thread if performing UI operations
-                
-                
-                   await ShowSimpleToast();
-                
-                
-               
-                  
-                
+
+
+                await ShowSimpleToast();
+
+
+
+
+
             }
 
 
-           
-            
+
+
         }
-        public async Task  ShowSimpleToast()
+        public async Task ShowSimpleToast()
         {
             new ToastContentBuilder()
                 .AddText("新更新！")               // 主标题（加粗显示）
@@ -207,16 +208,39 @@ namespace lanpingcj
                 .Show();                      // 立即显示
         }
 
+        [Obsolete]
+        private void ToastNotificationManagerCompat_OnActivated(ToastNotificationActivatedEventArgsCompat args)
+        {
+            // 获取点击的按钮索引
+            MoreInfo MoreInfo = new MoreInfo();
+            MoreInfo.ShowDialog();
+        }
         #region 构造函数
         /// <summary>
         /// 主窗口构造函数
         /// </summary>
+        [Obsolete]
         public MainWindow()
         {
             int Width = 0;
             int Height = 0;
             InitializeComponent();
-            
+            ToastNotificationManagerCompat.OnActivated += toastArgs =>
+            {
+                // Obtain the arguments from the notification
+                ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
+
+                // Obtain any user input (text boxes, menu selections) from the notification
+                ValueSet userInput = toastArgs.UserInput;
+
+                // Need to dispatch to UI thread if performing UI operations
+                Dispatcher.InvokeAsync(delegate
+                {
+                    // TODO: Show the corresponding content
+                    // MessageBox.Show("Toast activated. Args: " + toastArgs.Argument);
+                    ToastNotificationManagerCompat_OnActivated(toastArgs);
+                });
+            };
             ShowInTaskbar = false;
 
             // 创建并启动时间更新定时器
@@ -580,7 +604,7 @@ namespace lanpingcj
         /// <summary>
         /// 设置窗口为工具窗口样式并置顶
         /// </summary>
-        private void AWindow_SourceInitialized(object sender, EventArgs e)
+        private void AWindow_SourceInitialized(object? sender, EventArgs e)
         {
             // 获取窗口句柄
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -640,7 +664,7 @@ namespace lanpingcj
         /// <summary>
         /// 清除已抽取名单文件
         /// </summary>
-        private void ClearAlreadyFile(object sender, EventArgs e)
+        private void ClearAlreadyFile(object? sender, EventArgs e)
         {
             string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
             string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
@@ -778,6 +802,7 @@ namespace lanpingcj
         /// <summary>
         /// 关于菜单项点击事件
         /// </summary>
+        [Obsolete]
         void MenuItem_About_Click(object sender, RoutedEventArgs e)
         {
             MoreInfo more = new MoreInfo();
@@ -839,7 +864,7 @@ namespace lanpingcj
         /// <summary>
         /// 时间更新定时器事件
         /// </summary>
-        private void Timer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object? sender, EventArgs e)
         {
             time.Text = DateTime.Now.ToString("HH:mm");
         }
@@ -1353,9 +1378,6 @@ namespace lanpingcj
             Microsoft.Win32.SystemEvents.SessionSwitch -= SystemEvents_SessionSwitch;
             base.OnClosed(e);
         }
-        #endregion
-        #region
-
     }
 }
 #endregion

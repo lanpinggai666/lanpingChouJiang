@@ -46,7 +46,8 @@ namespace lanpingcj.Views.Pages
             return (version, mandatory);
         }
 
-        // 调用时接收两个值
+        
+        [Obsolete]
         public async Task CheckUpdate()
         {
 
@@ -233,8 +234,6 @@ namespace lanpingcj.Views.Pages
             // 处理所有可能的名单文件
             string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
 
-            bool anyFileProcessed = false;
-
             foreach (string file in files)
             {
                 string filePath = System.IO.Path.Combine(MindanPath, file);
@@ -274,7 +273,6 @@ namespace lanpingcj.Views.Pages
                         if (cleanedLines.Count > 0)
                         {
                             File.WriteAllLines(filePath, cleanedLines, Encoding.UTF8);
-                            anyFileProcessed = true;
                         }
                         else
                         {

@@ -1,19 +1,57 @@
 ﻿using lanpingcj.Views.Pages;
-using System;
+using Microsoft.Toolkit.Uwp.Notifications;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Speech.Synthesis;
+using System.Threading;
 using System.Windows;
+using Windows.Foundation.Collections;
 using Wpf.Ui.Controls;
 
 namespace lanpingcj
 {
     public partial class MoreInfo : FluentWindow
     {
-        public async Task<(string Version, string Mandatory)> GetVersion()
+
+		private static Mutex? _appMutex; 
+		private static bool _hasHandle = false;
+		private string localFileName = "latest.exe";
+		private bool isDownloading = false;
+		private static bool IsAlreadyRunning()
+		{
+			string mutexName = $"Global\\{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}_MoreInfo_Mutex";
+
+			try
+			{
+				_appMutex = new Mutex(true, mutexName, out _hasHandle);
+
+				
+				if (!_hasHandle)
+				{
+					return true; 
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"检查Mutex失败: {ex.Message}");
+			
+				_hasHandle = true;
+			}
+
+			return false; 
+		}
+		private static void ReleaseMutex()
+		{
+			if (_hasHandle && _appMutex != null)
+			{
+				_appMutex.ReleaseMutex();
+				_appMutex.Dispose();
+				_hasHandle = false;
+			}
+		}
+		public async Task<(string Version, string Mandatory)> GetVersion()
         {
-            string url = "https://gh.jasonzeng.dev/https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
+            string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
 
             using HttpClient client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(30);
@@ -26,11 +64,11 @@ namespace lanpingcj
             string version = reader.ReadLine()?.Trim() ?? string.Empty;
             string mandatory = reader.ReadLine()?.Trim() ?? string.Empty;
 
-            // 一次性返回两个值
+            
             return (version, mandatory);
         }
 
-        // 调用时接收两个值
+        [Obsolete]
         public async Task CheckUpdate()
         {
 
@@ -81,44 +119,194 @@ namespace lanpingcj
 
 
         }
-        public async Task DownloadUpdate()
-        {
-            string downloadUrl = "https://lanpinggai66-my.sharepoint.com/personal/lanpinggai666_lanpinggai66_onmicrosoft_com/_layouts/52/download.aspx?share=IQDkSqcZUZCtQJOHJJN8yNrpAV2HSnKjGXBBRqOOkY2D4IQ";
-            string localFileName = "latest.exe";
+		private string FormatFileSize(long bytes)
+		{
+			string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+			int i = 0;
+			double dblBytes = bytes;
 
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    Debug.WriteLine("正在下载文件...");
+			while (Math.Round(dblBytes / 1024) >= 1)
+			{
+				dblBytes /= 1024;
+				i++;
+			}
 
-                    // 异步下载文件
-                    byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
+			return string.Format("{0:0.##} {1}", dblBytes, suffixes[i]);
+		}
+		public async Task DownloadUpdate()
+		{
+			string downloadUrl = "https://lanpinggai66-my.sharepoint.com/personal/lanpinggai666_lanpinggai66_onmicrosoft_com/_layouts/52/download.aspx?share=IQDkSqcZUZCtQJOHJJN8yNrpAV2HSnKjGXBBRqOOkY2D4IQ";
+			string localFileName = "latest.exe";
 
-                    // 保存文件
-                    await File.WriteAllBytesAsync(localFileName, fileBytes);
-                    Console.WriteLine("下载完成！");
-                }
+			try
+			{
+				// 显示开始Toast
+				ShowSimpleToast("开始下载更新", "正在连接服务器...", false);
 
-                // 执行文件
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = localFileName,
-                    UseShellExecute = true  // 使用系统外壳执行
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"错误: {ex.Message}");
-            }
-        }
+				using (HttpClient client = new HttpClient())
+				{
+					var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+					long? totalBytes = response.Content.Headers.ContentLength;
+
+					using (var stream = await response.Content.ReadAsStreamAsync())
+					using (var fileStream = File.Create(localFileName))
+					{
+						byte[] buffer = new byte[8192];
+						long totalBytesRead = 0;
+						int bytesRead;
+
+						while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+						{
+							await fileStream.WriteAsync(buffer, 0, bytesRead);
+							totalBytesRead += bytesRead;
+
+							if (totalBytes.HasValue)
+							{
+								int percentage = (int)((double)totalBytesRead / totalBytes.Value * 100);
+
+								// 每5%更新一次Toast，避免过于频繁
+								if (percentage % 5 == 0)
+								{
+									UpdateSimpleToast(
+										$"下载中... {percentage}%",
+										$"{FormatFileSize(totalBytesRead)} / {FormatFileSize(totalBytes.Value)}"
+									);
+								}
+							}
+						}
+					}
+				}
+
+				// 显示完成Toast
+				ShowSimpleToast("下载完成", "点击安装更新", true);
+
+				// 执行文件
+				
+			}
+			catch (Exception ex)
+			{
+				ShowSimpleToast("下载失败", ex.Message, true);
+			}
+		}
+
+		private void ShowSimpleToast(string title, string message, bool withSound)
+		{
+			var builder = new ToastContentBuilder()
+				.AddText(title)
+				.AddText(message);
+
+		
+
+			builder.Show();
+		}
+
+		private void UpdateSimpleToast(string title, string message)
+		{
+			
+			try
+			{
+				var builder = new ToastContentBuilder()
+					.AddText(title)
+					.AddText(message)
+					.AddAudio(new ToastAudio() { Silent = true });
+
+				builder.Show(toast =>
+				{
+					toast.Tag = "downloadProgress";
+					toast.Group = "updates";
+				});
+			}
+			catch { }
+		}
+		
+		private void OpenDownloadedFile()
+		{
+
+
+			if (File.Exists(localFileName))
+			{
+				var fileInfo = new FileInfo(localFileName);
+				if (fileInfo.Length == 0)
+				{
+					ShowSimpleToast("文件无效", "下载的文件为空，请重新下载", true);
+					return;
+				}
+
+				Process.Start(new ProcessStartInfo
+				{
+					FileName = localFileName,
+					UseShellExecute = true
+				});
+			}
+		}
+		private void ActivateExistingWindow()
+		{
+			try
+			{
+				var existingWindow = Application.Current.Windows.OfType<MoreInfo>().FirstOrDefault();
+
+				if (existingWindow != null)
+				{
+					if (existingWindow.WindowState == WindowState.Minimized)
+					{
+						existingWindow.WindowState = WindowState.Normal;
+					}
+
+					existingWindow.Activate();
+					existingWindow.Topmost = true;
+					existingWindow.Topmost = false;
+					existingWindow.Focus();
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"激活现有窗口失败: {ex.Message}");
+			}
+		}
+
+        [Obsolete]
         public MoreInfo()
         {
-            InitializeComponent();
+			//bool createdNew;
+			this.Closed += (sender, e) =>
+			{
+				ReleaseMutex();
+			};
+			//mutex = new Mutex(true);
+			if (IsAlreadyRunning())
+			{
 
-            // 订阅 Loaded 事件，确保 UI 完全加载后再进行导航
-            // Loaded += OnWindowLoaded;
-            Dispatcher.BeginInvoke(() =>
+				ActivateExistingWindow();
+
+				// 关闭当前尝试创建的窗口
+				this.Close();
+				return; // 直接返回，不继续初始化
+			}
+			InitializeComponent();
+			ToastNotificationManagerCompat.OnActivated += toastArgs =>
+			{
+				// Obtain the arguments from the notification
+				ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
+
+				// Obtain any user input (text boxes, menu selections) from the notification
+				ValueSet userInput = toastArgs.UserInput;
+
+				// Need to dispatch to UI thread if performing UI operations
+				Application.Current.Dispatcher.Invoke(delegate
+				{
+					// TODO: Show the corresponding content
+					//MessageBox.Show("Toast activated. Args: " + toastArgs.Argument);
+					//ToastNotificationManagerCompat_OnActivated(toastArgs);
+					Process.Start(new ProcessStartInfo
+					{
+						FileName = localFileName,
+						UseShellExecute = true
+					});
+				});
+			};
+			// 订阅 Loaded 事件，确保 UI 完全加载后再进行导航
+			// Loaded += OnWindowLoaded;
+			Dispatcher.BeginInvoke(() =>
             {
                 try
                 {

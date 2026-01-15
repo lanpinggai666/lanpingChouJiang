@@ -219,26 +219,7 @@ namespace lanpingcj
 			catch { }
 		}
 		
-		private void OpenDownloadedFile()
-		{
-
-
-			if (File.Exists(localFileName))
-			{
-				var fileInfo = new FileInfo(localFileName);
-				if (fileInfo.Length == 0)
-				{
-					ShowSimpleToast("文件无效", "下载的文件为空，请重新下载", true);
-					return;
-				}
-
-				Process.Start(new ProcessStartInfo
-				{
-					FileName = localFileName,
-					UseShellExecute = true
-				});
-			}
-		}
+		
 		private void ActivateExistingWindow()
 		{
 			try

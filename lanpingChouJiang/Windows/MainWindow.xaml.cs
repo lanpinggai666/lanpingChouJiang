@@ -188,7 +188,7 @@ namespace lanpingcj
                 // Need to dispatch to UI thread if performing UI operations
 
 
-                await ShowSimpleToast();
+                await ShowSimpleToast("更新提醒",$"我们检测到了一个新的更新：{LatestVersion}，点击这个通知以获取更新");
 
 
 
@@ -200,11 +200,11 @@ namespace lanpingcj
 
 
         }
-        public async Task ShowSimpleToast()
+        public async Task ShowSimpleToast(string tittle,string text)
         {
             new ToastContentBuilder()
-                .AddText("新更新！")               // 主标题（加粗显示）
-                .AddText("我们检测到了一个新的更新，点击这个通知以获取")             // 副标题（正常字体）
+                .AddText(tittle)               // 主标题（加粗显示）
+                .AddText(text)             // 副标题（正常字体）
                 .Show();                      // 立即显示
         }
 
@@ -280,8 +280,15 @@ namespace lanpingcj
             Microsoft.Win32.SystemEvents.SessionSwitch += SystemEvents_SessionSwitch;
             this.Loaded += async (sender, e) =>
             {
-
-                await CheckUpdate();
+                try
+                {
+                    await CheckUpdate();
+                }
+                catch (Exception ex)
+                {
+                    string error = $"错误: {ex.Message}";
+                  await  ShowSimpleToast("更新出错",error);
+                }
             };
             // Need to dispatch to UI thread if performing UI operations
 

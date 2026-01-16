@@ -12,8 +12,9 @@ using Windows.Foundation.Collections;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Extensions;
-
-
+using Microsoft.Win32;
+using System.Reflection; // 新增，用于获取程序集名
+using System.Threading; // 保证 Mutex 可用
 
 namespace lanpingcj
 {
@@ -40,7 +41,8 @@ namespace lanpingcj
         // 屏幕分辨率获取常量
         private const int SM_CXSCREEN = 0; // 屏幕宽度
         private const int SM_CYSCREEN = 1; // 屏幕高度
-
+        private static Mutex? _appMutex;
+        private static bool _hasHandle = false;
 
 
         // Win32 API声明 - 用于设置窗口样式
@@ -148,7 +150,108 @@ namespace lanpingcj
 
         public ContentDialogService? _contentDialogService;
         #endregion
+        #region mutex相关方法
+        
 
+public static bool IsBelowWindows10()
+    {
+        try
+        {
+            const string registryPath = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
+
+            using (var key = Registry.LocalMachine.OpenSubKey(registryPath))
+            {
+                if (key != null)
+                {
+                    var currentBuild = key.GetValue("CurrentBuildNumber") as string;
+                    var productName = key.GetValue("ProductName") as string;
+
+                    if (!string.IsNullOrEmpty(currentBuild) && int.TryParse(currentBuild, out int buildNumber))
+                    {
+                        // Windows 10的第一个版本号是10240
+                        return buildNumber < 10240;
+                    }
+
+                    if (!string.IsNullOrEmpty(productName))
+                    {
+                        // 通过产品名称判断
+                        return !productName.Contains("Windows 10") &&
+                               !productName.Contains("Windows 11");
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // 处理异常
+        }
+
+        return false; // 默认返回false
+    }
+    private static bool IsAlreadyRunning()
+        {
+            // 使用程序集名并标注 MainWindow，避免冲突且可读
+            string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? "lanpingcj";
+            string mutexName = $"Global\\{assemblyName}_MainWindow_Mutex";
+            try
+            {
+                bool createdNew;
+                _appMutex = new Mutex(true, mutexName, out createdNew);
+                _hasHandle = createdNew;
+
+                // 如果没有创建新的 mutex，说明已有实例在运行
+                if (!createdNew)
+                {
+                    // 关闭并让调用方退出
+                    return true;
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                // 有可能没有权限创建 Global\\ 命名空间的 mutex
+                Debug.WriteLine($"创建 Mutex 权限不足: {ex.Message}");
+                // 尝试使用非全局命名空间（回退）
+                try
+                {
+                    string fallbackName = $"{assemblyName}_MainWindow_Mutex";
+                    bool createdNew;
+                    _appMutex = new Mutex(true, fallbackName, out createdNew);
+                    _hasHandle = createdNew;
+                    if (!createdNew) return true;
+                }
+                catch (Exception ex2)
+                {
+                    Debug.WriteLine($"回退创建 Mutex 失败: {ex2.Message}");
+                    // 保守起见，认为未取得控制权，从而允许新实例（或你也可以选择阻止）
+                    _hasHandle = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"检查Mutex失败: {ex.Message}");
+                _hasHandle = false;
+            }
+
+            return false; // 没有其他实例在运行
+        }
+        private static void ReleaseMutex()
+        {
+            if (_hasHandle && _appMutex != null)
+            {
+                try
+                {
+                    _appMutex.ReleaseMutex();
+                }
+                catch { /* 忽略释放异常 */ }
+                finally
+                {
+                    _appMutex.Dispose();
+                    _appMutex = null;
+                    _hasHandle = false;
+                }
+            }
+        }
+        #endregion
         public async Task<(string Version, string Mandatory)> GetVersion()
         {
             string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
@@ -169,6 +272,8 @@ namespace lanpingcj
         }
 
         // 调用时接收两个值
+        
+
         public async Task CheckUpdate()
         {
 
@@ -179,6 +284,7 @@ namespace lanpingcj
             bool mandatory = bool.Parse(result.Mandatory);//强制更新
             Version LatestVersion = new Version(result.Version);
             Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion);
+            bool WindowsVersion = IsBelowWindows10();
             Debug.WriteLine($"当前版本: {ThisVersion}, 最新版本: {LatestVersion}, 强制更新: {mandatory}");
             if (LatestVersion > ThisVersion)
             {
@@ -187,9 +293,14 @@ namespace lanpingcj
                 //  MoreInfo.ShowDialog();
                 // Need to dispatch to UI thread if performing UI operations
 
-
-                await ShowSimpleToast("更新提醒",$"我们检测到了一个新的更新：{LatestVersion}，点击这个通知以获取更新");
-
+                if (!WindowsVersion)
+                {
+                    await ShowSimpleToast("更新提醒", $"我们检测到了一个新的更新：{LatestVersion}，点击这个通知以获取更新","OpenMoreInfo");
+                }
+                else
+                {
+                    new MoreInfo().ShowDialog();
+                }
 
 
 
@@ -200,47 +311,44 @@ namespace lanpingcj
 
 
         }
-        public async Task ShowSimpleToast(string tittle,string text)
+        public async Task ShowSimpleToast(string tittle,string text,string ToastAction)
         {
             new ToastContentBuilder()
+                                .AddArgument("action", ToastAction)
+                                
+
                 .AddText(tittle)               // 主标题（加粗显示）
                 .AddText(text)             // 副标题（正常字体）
                 .Show();                      // 立即显示
         }
 
-        [Obsolete]
-        private void ToastNotificationManagerCompat_OnActivated(ToastNotificationActivatedEventArgsCompat args)
-        {
-            // 获取点击的按钮索引
-            MoreInfo MoreInfo = new MoreInfo();
-            MoreInfo.ShowDialog();
-        }
+        
+        
         #region 构造函数
         /// <summary>
         /// 主窗口构造函数
         /// </summary>
-        [Obsolete]
+       
         public MainWindow()
         {
+            // 在创建 UI 前检查单实例
+            if (IsAlreadyRunning())
+            {
+                // 如果已有实例，立即确保当前进程退出
+                Application.Current?.Shutdown();
+                return; 
+            }
+
+            // 在窗口关闭时释放 mutex
+            this.Closed += (sender, e) =>
+            {
+                ReleaseMutex();
+            };
+
             int Width = 0;
             int Height = 0;
             InitializeComponent();
-            ToastNotificationManagerCompat.OnActivated += toastArgs =>
-            {
-                // Obtain the arguments from the notification
-                ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
-
-                // Obtain any user input (text boxes, menu selections) from the notification
-                ValueSet userInput = toastArgs.UserInput;
-
-                // Need to dispatch to UI thread if performing UI operations
-                Dispatcher.InvokeAsync(delegate
-                {
-                    // TODO: Show the corresponding content
-                    // MessageBox.Show("Toast activated. Args: " + toastArgs.Argument);
-                    ToastNotificationManagerCompat_OnActivated(toastArgs);
-                });
-            };
+            
             ShowInTaskbar = false;
 
             // 创建并启动时间更新定时器
@@ -283,14 +391,25 @@ namespace lanpingcj
                 try
                 {
                     await CheckUpdate();
+                    var result = await GetVersion();
+                    bool mandatory = bool.Parse(result.Mandatory);
+                    if (mandatory)
+                    {
+                        MoreInfo moreInfo = new MoreInfo();
+                        moreInfo.Closed += (sender, e) =>
+                        {
+                            Process.GetCurrentProcess().Kill();
+
+                        };
+                    }
                 }
                 catch (Exception ex)
                 {
-                    string error = $"错误: {ex.Message}";
-                  await  ShowSimpleToast("更新出错",error);
+                    string error = $"错误: {ex.Message}\n请检查Internet连接和对Github的连通性。";
+                  await  ShowSimpleToast("更新出错",error,"Download");
                 }
             };
-            // Need to dispatch to UI thread if performing UI operations
+            
 
         }
         #endregion
@@ -417,55 +536,8 @@ namespace lanpingcj
         /// <summary>
         /// 初始化概率平衡数据到名单文件
         /// </summary>
-        private void InitializeProbabilityDataToFiles()
-        {
-            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-
-            // 处理所有可能的名单文件
-            string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
-
-            foreach (string file in files)
-            {
-                string filePath = System.IO.Path.Combine(MindanPath, file);
-                if (File.Exists(filePath))
-                {
-                    // 读取文件内容，为每行添加计数标记
-                    string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
-                    List<string> updatedLines = new List<string>();
-
-                    foreach (string line in lines)
-                    {
-                        if (!string.IsNullOrWhiteSpace(line))
-                        {
-                            // 如果行中已包含计数标记（格式：姓名#计数），则保留
-                            if (line.Contains("#"))
-                            {
-                                // 确保计数格式正确
-                                string[] parts = line.Split('#');
-                                if (parts.Length == 2 && int.TryParse(parts[1], out _))
-                                {
-                                    updatedLines.Add(line);
-                                }
-                                else
-                                {
-                                    updatedLines.Add($"{line.Trim()}#0");
-                                }
-                            }
-                            else
-                            {
-                                updatedLines.Add($"{line.Trim()}#0");
-                            }
-                        }
-                    }
-
-                    // 写回文件
-                    if (updatedLines.Count > 0)
-                    {
-                        File.WriteAllLines(filePath, updatedLines, Encoding.UTF8);
-                    }
-                }
-            }
-        }
+        
+        
 
         /// <summary>
         /// 从名单文件中读取概率平衡数据
@@ -812,8 +884,35 @@ namespace lanpingcj
         [Obsolete]
         void MenuItem_About_Click(object sender, RoutedEventArgs e)
         {
-            MoreInfo more = new MoreInfo();
-            more.Show(); // 打开关于窗口
+            try
+            {
+                // 直接创建新窗口，而不是检查现有窗口
+                var more = new MoreInfo();
+
+                // 添加Closed事件处理，确保可以重新打开
+                more.Closed += (s, args) =>
+                {
+                    // 可以在这里清理资源，但不需要设置窗口为null
+                    // 因为WPF的窗口管理会自动处理
+                };
+
+                more.Show();
+
+                // 确保窗口在最前面
+                more.Topmost = true;
+                more.Topmost = false; // 立即取消，允许其他窗口获得焦点
+                more.Focus();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"打开关于窗口失败: {ex.Message}");
+
+                // 备选方案：显示简单消息框
+               // MessageBox.Show($"无法打开关于窗口: {ex.Message}",
+                     //          "错误",
+                     //          MessageBoxButton.OK,
+                     //          MessageBoxImage.Error);
+            }
         }
 
         /// <summary>
@@ -1010,7 +1109,6 @@ namespace lanpingcj
 
 
 
-                OpenFileInNotepad(filePath);
                 return false;
             }
 

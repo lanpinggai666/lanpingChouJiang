@@ -125,6 +125,7 @@ namespace lanpingcj.Views.Pages
             LoadTTSSetting();
             LoadgailvSetting();
             version.Text=Properties.Settings.Default.ThisVersion;
+            version2.Text =$"v{Properties.Settings.Default.ThisVersion}";
         }
 
         // 加载当前声音设置

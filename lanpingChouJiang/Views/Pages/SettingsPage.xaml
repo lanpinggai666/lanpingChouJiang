@@ -223,7 +223,7 @@
                 FontTypography="BodyStrong"
                 Text="关于" />
 
-            <ui:CardExpander ContentPadding="0" Icon="{ui:ImageIcon '/headimg_dl.jpg', Width=38, Height=35}">
+            <ui:CardExpander ContentPadding="0" Icon="{ui:ImageIcon '/headimg_dl.jpg', Width=38, Height=38}">
                 <ui:CardExpander.Header>
                     <Grid>
                         <Grid.RowDefinitions>
@@ -251,7 +251,8 @@
                             Margin="0,0,16,0"
                             VerticalAlignment="Center"
                             Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                            Text="v2.0.0" />
+                            Text="v2.0.0"
+                            x:Name="version2"/>
                     </Grid>
                 </ui:CardExpander.Header>
                 <StackPanel>

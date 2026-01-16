@@ -39,7 +39,7 @@
                     Width="60">
                 <Button.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="关于" Click="MenuItem_About_Click" Icon="{ui:SymbolIcon Info20}"/>
+                        <MenuItem Header="更多" Click="MenuItem_About_Click" Icon="{ui:SymbolIcon Share20}"/>
                        
                         <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy" Icon="{ui:SymbolIcon Person20}"/>
                         <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl" Icon="{ui:SymbolIcon Person20}"/>

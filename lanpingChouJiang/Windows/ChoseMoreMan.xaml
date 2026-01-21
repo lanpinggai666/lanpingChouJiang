@@ -1,4 +1,4 @@
-﻿<Window x:Class="lanpingcj.ChoseMoreMan"
+﻿<ui:FluentWindow x:Class="lanpingcj.ChoseMoreMan"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -7,43 +7,54 @@
         xmlns:local="clr-namespace:lanpingcj"
         mc:Ignorable="d"
         Title="选择人数" Height="200" Width="350"
+                 d:DesignHeight="200"
+d:DesignWidth="350"
         Topmost="True"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+                 ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+                     ui:Design.Foreground="{DynamicResource ApplicationBackgroundBrush}"
+    Foreground="{DynamicResource ApplicationBackgroundBrush}"
+                     WindowBackdropType="Mica"
+                 ExtendsContentIntoTitleBar="True"
+
+>
     <Grid>
-        <TextBlock Text="选择人数" 
-                   HorizontalAlignment="Center" 
+
+        <ui:TextBlock Text="选择人数" 
+                   HorizontalAlignment="Left" 
                    VerticalAlignment="Center" 
-                   FontSize="15"
-                   Margin="0,0,180,50"/>
+                   FontSize="20"
+                   Margin="30,0,0,45" Foreground="Black"
+                      />
         <ComboBox x:Name="NumberComboBox" 
-          Width="150" 
-          Height="35"
+          Height="36"
           VerticalContentAlignment="Center"
-                  Margin="80,0,18,50"
-                SelectedIndex="0"  />
+                  Margin="131,120,18,0"
+                SelectedIndex="0" VerticalAlignment="Top"  />
         <Button Name="确定"
                 Content="确定" 
-                Width="150" 
+                Width="200" 
                 Height="30" 
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Bottom" 
-                Margin="0,0,180,20"
+                Margin="0,0,250,20"
     Click="OK" Foreground="#E4FFFFFF"
                 >
             <Button.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                     <GradientStop Color="#0f6cbd" Offset="0.0"/>
-                   
+
                 </LinearGradientBrush>
             </Button.Background>
         </Button>
         <Button Name="取消"
                 Content="取消"
-                Width="150"
+                Width="200"
                 HorizontalAlignment="Right" 
                 VerticalAlignment="Bottom" 
                 Margin="0,0,10,20"
                 Height="30"
                 Click="Cancel"></Button>
+        
     </Grid>
-</Window>
+</ui:FluentWindow>

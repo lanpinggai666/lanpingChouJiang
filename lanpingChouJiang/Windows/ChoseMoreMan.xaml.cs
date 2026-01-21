@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Windows;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
 namespace lanpingcj
@@ -9,12 +10,14 @@ namespace lanpingcj
     /// <summary>
     /// Window1.xaml 的交互逻辑
     /// </summary>
-    public partial class ChoseMoreMan : Window
+    public partial class ChoseMoreMan : FluentWindow
     {
         public string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         public ChoseMoreMan()
         {
             InitializeComponent();
+
+            
             string mindanPath = System.IO.Path.Combine(documentsPath, "mindan");
 
             // 确保目录存在
@@ -115,7 +118,6 @@ namespace lanpingcj
 
     int selectedValue = (int)NumberComboBox.SelectedItem;
 
-    // 读取已抽名单，过滤空项与占位 "test"，同时去除 # 及其后面的内容
     var alreadyLines = File.ReadAllLines(AlreadyPath, Encoding.UTF8)
                            .Select(s => s?.Trim())
                            .Where(s => !string.IsNullOrWhiteSpace(s))
@@ -127,14 +129,11 @@ namespace lanpingcj
                            })
                            .ToHashSet(StringComparer.Ordinal);
 
-    // 可选池为尚未抽过的姓名
     var available = allLines.Where(n => !alreadyLines.Contains(n)).ToList();
 
     bool wasReset = false;
-    // 如果可选池小于需要抽取的数量，则重置已抽名单（与原逻辑一致）
     if (available.Count < selectedValue)
     {
-        // 重置已抽文件并把可选池恢复为全部名单
         File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
         alreadyLines.Clear();
         available = new List<string>(allLines);
@@ -159,23 +158,13 @@ namespace lanpingcj
 
     var picked = available.Take(selectedValue).ToList();
 
-    // 将选中的姓名追加到 Already.txt（每个姓名一行）
-    // 保证文件以单独行保存
-    var sbAppend = new StringBuilder();
-    foreach (var name in picked)
-    {
-        sbAppend.AppendLine(name);
-    }
-    File.AppendAllText(AlreadyPath, sbAppend.ToString(), Encoding.UTF8);
+    
 
     // 拼接显示结果
     string IsRestested = wasReset ? "已重置点名不重复\n" : string.Empty;
     string joined = string.Join(", ", picked);
 
-    // System.Windows.MessageBox.Show($"{IsRestested}幸运儿： {joined} ({studentsCount})\n",
-    //      "抽奖结果",
-    //     System.Windows.MessageBoxButton.OK,
-    //    MessageBoxImage.Information);
+    
     Properties.Settings.Default.IsMain = false;
     Properties.Settings.Default.Save();
     MessageBox MB = new MessageBox();

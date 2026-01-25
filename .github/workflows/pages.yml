@@ -1,0 +1,23 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - master  
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: npm install && npm run docs:build # 安装依赖并构建
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }} # 使用你设置的 Token
+          branch: master
+          folder: docs/.vuepress/dist 

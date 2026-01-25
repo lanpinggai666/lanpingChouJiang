@@ -25,7 +25,8 @@
     <!-- 确保 Grid 随窗口伸缩 -->
     <Grid
         HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch">
+        VerticalAlignment="Stretch"
+        Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -34,7 +35,8 @@
         <ui:NavigationView 
             x:Name="NavigationView" 
             Grid.Row="1"
-            IsBackButtonVisible="Collapsed">
+            IsBackButtonVisible="Collapsed"
+            Background="Transparent">
 
             <ui:NavigationView.Header>
                 <ui:BreadcrumbBar Margin="42,32,0,0" FontSize="28" FontWeight="DemiBold" />
@@ -44,7 +46,8 @@
                 <ui:NavigationViewItem
                     Content="设置"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:SettingsPage}">
+                    TargetPageType="{x:Type pages:SettingsPage}"
+                    Background="Transparent">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Settings24" />
                     </ui:NavigationViewItem.Icon>

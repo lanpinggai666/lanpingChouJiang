@@ -1,0 +1,139 @@
+﻿<Page x:Class="lanpingcj.Views.Pages.UpdatePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"      
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      d:DesignHeight="450"
+      d:DesignWidth="800"
+      Title="更新"      
+      mc:Ignorable="d">
+
+    <Page.Resources>
+        <LinearGradientBrush x:Key="BlueGradientBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#4DABF7" Offset="0"/>
+            <GradientStop Color="#1971C2" Offset="1"/>
+        </LinearGradientBrush>
+
+        <SolidColorBrush x:Key="GreenBrush" Color="#37B24D"/>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel Margin="24">
+            <ui:TextBlock Margin="0,0,0,16" FontSize="20" FontWeight="SemiBold" Text="更新" />
+
+            <Grid Height="Auto" Margin="0,0,0,32">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Grid.Row="0" Margin="0,0,24,0" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="ArrowSync20" 
+                                   FontSize="96" 
+                                   Filled="True" 
+                                   Foreground="{StaticResource BlueGradientBrush}">
+                        <ui:SymbolIcon.RenderTransform>
+                            <RotateTransform Angle="70" CenterX="48" CenterY="48"/>
+                        </ui:SymbolIcon.RenderTransform>
+                    </ui:SymbolIcon>
+                    <ui:SymbolIcon x:Name="StateIcon" 
+                                   Symbol="CheckmarkCircle24" 
+                                   FontSize="40" 
+                                   Filled="True" 
+                                   Margin="66,40,0,0"
+                                   Foreground="{StaticResource GreenBrush}" 
+                                   Visibility="Visible"/>
+                </Grid>
+
+                <StackPanel Grid.Column="1" Grid.Row="0" VerticalAlignment="Center">
+                    <ui:TextBlock x:Name="StateText" 
+                                  FontTypography="Subtitle" 
+                                  Text="你使用的是最新版本" 
+                                  FontSize="24" 
+                                  Visibility="Visible"/>
+                    <ui:TextBlock x:Name="LastCheckTimeText" 
+                                  Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}" 
+                                  Text="上次检查时间: 今天" 
+                                  Visibility="Visible"/>
+                </StackPanel>
+
+                <Grid Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" MinWidth="150">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ui:Button x:Name="CheckUpdateButton" 
+                               Content="检查更新" 
+                               Appearance="Primary" 
+                               Padding="20,8" 
+                               HorizontalAlignment="Right"
+                               Click="OnCheckUpdatesClick" IsEnabled="True"
+                               />
+
+                    <ProgressBar x:Name="ProgressBar" 
+                                 Grid.Row="1"
+                                 IsIndeterminate="True" 
+                                 Margin="0,8,0,0" 
+                                 Width="120"
+                                 HorizontalAlignment="Left"
+                                 Visibility="Hidden" />
+                </Grid>
+
+                <ui:CardControl x:Name="UpdateVersionCard" 
+                                Grid.Row="1" 
+                                Grid.ColumnSpan="3" 
+                                Margin="0,20,0,0" 
+                                Visibility="Collapsed">
+                    <ui:CardControl.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock FontSize="14" Text="更新日志" VerticalAlignment="Center" x:Name="VereionText"/>
+                            <ui:Button Content="安装"
+                                       Appearance="Transparent"
+                                       Click="Install"
+                                       Grid.Column="1"   
+                                       Padding="12,4"
+                                       BorderThickness="0"
+                                       IsEnabled="True"
+                                       x:Name="InstallButton"/>
+                        </Grid>
+                    </ui:CardControl.Header>
+                </ui:CardControl>
+            </Grid>
+
+            <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Text="更多选项" />
+
+            <ui:CardControl Icon="{ui:SymbolIcon Timer24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="Body" Text="自动检查更新频率" />
+                        <ui:TextBlock Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}" 
+                                      Text="设置后台自动检查更新的时间间隔（分钟）。" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+
+                <ui:NumberBox x:Name="UpdateIntervalBox" 
+                              MinWidth="120"
+                              PlaceholderText="输入分钟"
+                              Value="20"
+                              SpinButtonPlacementMode="Inline"
+                              ValueChanged="UpdateIntervalBox_ValueChanged" />
+            </ui:CardControl>
+
+            <Grid>
+                <ContentPresenter x:Name="RootContentDialogPresenter" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

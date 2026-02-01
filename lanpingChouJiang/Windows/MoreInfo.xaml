@@ -48,10 +48,26 @@
                     NavigationCacheMode="Enabled"
                     TargetPageType="{x:Type pages:SettingsPage}"
                     Background="Transparent">
+                     
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Settings24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
+                
+                <ui:NavigationViewItem
+         Content="更新"
+         NavigationCacheMode="Enabled"
+         TargetPageType="{x:Type pages:UpdatePage}"
+         Background="Transparent">
+
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="ArrowSync20" 
+                Filled="True" 
+                >
+                        </ui:SymbolIcon>
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+
             </ui:NavigationView.MenuItems>
         </ui:NavigationView>
 

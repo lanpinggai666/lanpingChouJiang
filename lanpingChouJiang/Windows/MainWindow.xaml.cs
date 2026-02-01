@@ -272,8 +272,26 @@ public static bool IsBelowWindows10()
         }
 
         // 调用时接收两个值
-        
 
+        public static void EnsurePreferExternalManifest()
+        {
+            const string subKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\SideBySide";
+            try
+            {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subKey, true))
+                {
+                    if (key != null && key.GetValue("PreferExternalManifest")?.ToString() != "1")
+                    {
+                        key.SetValue("PreferExternalManifest", 1, RegistryValueKind.DWord);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // 提示：需要以管理员身份运行才能修改此键值
+                Console.WriteLine("注册表修改失败: " + ex.Message);
+            }
+        }
         public async Task CheckUpdate()
         {
 
@@ -331,6 +349,7 @@ public static bool IsBelowWindows10()
        
         public MainWindow()
         {
+            EnsurePreferExternalManifest();
             // 在创建 UI 前检查单实例
             if (IsAlreadyRunning())
             {
@@ -881,7 +900,6 @@ public static bool IsBelowWindows10()
         /// <summary>
         /// 关于菜单项点击事件
         /// </summary>
-        [Obsolete]
         void MenuItem_About_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -1302,6 +1320,11 @@ public static bool IsBelowWindows10()
                     break;
                 selectedStudent = newSelection;
                 attempts++;
+            }
+            if (attempts >= maxAttempts)
+            {
+                File.Delete(alreadyFilePath);
+                File.WriteAllText(alreadyFilePath, "test", Encoding.UTF8);
             }
 
             return selectedStudent;

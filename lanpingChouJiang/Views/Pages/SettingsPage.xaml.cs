@@ -4,9 +4,12 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Wpf.Ui.Controls;
+using System.Linq;  // 已经存在
+using System.Windows;  // 确保存在
 
 namespace lanpingcj.Views.Pages
 {
@@ -29,7 +32,7 @@ namespace lanpingcj.Views.Pages
         }
         public async Task<(string Version, string Mandatory)> GetVersion()
         {
-            string url = "https://gh.jasonzeng.dev/https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
+            string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
 
             using HttpClient client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(30);
@@ -47,7 +50,6 @@ namespace lanpingcj.Views.Pages
         }
 
         
-        [Obsolete]
         public async Task CheckUpdate()
         {
 
@@ -105,11 +107,10 @@ namespace lanpingcj.Views.Pages
                     Console.WriteLine("下载完成！");
                 }
 
-                // 执行文件
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = localFileName,
-                    UseShellExecute = true  // 使用系统外壳执行
+                    UseShellExecute = true  
                 });
             }
             catch (Exception ex)
@@ -124,6 +125,7 @@ namespace lanpingcj.Views.Pages
             LoadDuplicateSetting();
             LoadTTSSetting();
             LoadgailvSetting();
+            LoadTopmostSetting();
             version.Text=Properties.Settings.Default.ThisVersion;
             version2.Text =$"v{Properties.Settings.Default.ThisVersion}";
         }
@@ -194,7 +196,92 @@ namespace lanpingcj.Views.Pages
             }
         }
 
-        // 声音开关状态改变事件
+public static void WriteManifest(bool Gettop)
+    {
+        string exePath = Process.GetCurrentProcess().MainModule.FileName;
+        string manifestPath = exePath + ".manifest"; // 生成 MyApp.exe.manifest
+
+        string uiAccessValue = Gettop ? "true" : "false";
+
+        string xmlContent = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+<assembly manifestVersion=""1.0"" xmlns=""urn:schemas-microsoft-com:asm.v1"">
+  <assemblyIdentity version=""1.0.0.0"" name=""MyApplication.app""/>
+  <trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
+    <security>
+      <requestedPrivileges xmlns=""urn:schemas-microsoft-com:asm.v3"">
+        <requestedExecutionLevel level=""asInvoker"" uiAccess=""{uiAccessValue}"" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+</assembly>";
+
+        try
+        {
+            File.WriteAllText(manifestPath, xmlContent);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("文件写入失败: " + ex.Message);
+        }
+    }
+       
+    private void LoadTopmostSetting()
+        {
+            try
+            {
+                // 从自定义设置类加载
+                bool TopmostEnabled = Properties.Settings.Default.Top;
+                TopmostToggleSwitch.IsChecked = TopmostEnabled;
+            }
+            catch (System.Exception ex)
+            {
+                // 如果加载失败，使用默认值
+                TopmostToggleSwitch.IsChecked = false;
+                System.Diagnostics.Debug.WriteLine($"加载置顶设置失败: {ex.Message}");
+            }
+        }
+        private async void TopmostToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SaveTopSetting(true);
+            WriteManifest(true);
+
+            
+        }
+
+        private async void TopmostToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
+        {
+            SaveTopSetting(false);
+            WriteManifest(false);
+
+           
+        }
+        private async void SaveTopSetting(bool isEnabled)
+        {
+            if (IsLoaded)
+            {
+                try
+                {
+                    Properties.Settings.Default.Top = isEnabled;
+                    Properties.Settings.Default.Save();
+                    var moreInfoWindow = System.Windows.Application.Current.Windows.OfType<MoreInfo>().FirstOrDefault();
+                    if (moreInfoWindow != null)
+                    {
+                        await moreInfoWindow.TopDialog();
+                    }
+                    else
+                    {
+                        // 如果没有打开的MoreInfo窗口，则创建一个新的
+                        MoreInfo more = new MoreInfo();
+                        await more.TopDialog();
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"保存置顶设置失败: {ex.Message}");
+                }
+            }
+
+        }
         private void SoundToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
         {
             SaveSoundSetting(true);
@@ -222,17 +309,14 @@ namespace lanpingcj.Views.Pages
             }
         }
 
-        // 概率开关状态改变事件
         private void ProbabilityToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
         {
             SaveGailvSetting(true);
         }
-        // 新增：重置概率平衡数据方法
         private void Reset_Probability(object sender, EventArgs e)
         {
             string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
 
-            // 处理所有可能的名单文件
             string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
 
             foreach (string file in files)
@@ -242,20 +326,16 @@ namespace lanpingcj.Views.Pages
                 {
                     try
                     {
-                        // 读取文件内容
                         string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
                         List<string> cleanedLines = new List<string>();
 
-                        // 处理每一行，删除#和后面的数字
                         foreach (string line in lines)
                         {
                             if (!string.IsNullOrWhiteSpace(line))
                             {
-                                // 查找#的位置
                                 int hashIndex = line.IndexOf('#');
                                 if (hashIndex >= 0)
                                 {
-                                    // 只保留#之前的部分（姓名）
                                     string cleanedName = line.Substring(0, hashIndex).Trim();
                                     if (!string.IsNullOrEmpty(cleanedName))
                                     {
@@ -264,26 +344,22 @@ namespace lanpingcj.Views.Pages
                                 }
                                 else
                                 {
-                                    // 如果没有#，保留原样
                                     cleanedLines.Add(line.Trim());
                                 }
                             }
                         }
 
-                        // 写回文件
                         if (cleanedLines.Count > 0)
                         {
                             File.WriteAllLines(filePath, cleanedLines, Encoding.UTF8);
                         }
                         else
                         {
-                            // 如果文件为空，写入空文件
                             File.WriteAllText(filePath, "", Encoding.UTF8);
                         }
                     }
                     catch (Exception ex)
                     {
-                        // 错误处理
                         MessageBox w3 = new MessageBox();
                         w3.NewTittle = "错误";
                         w3.NewContent = $"处理文件 {file} 时出错: {ex.Message}";
@@ -298,7 +374,7 @@ namespace lanpingcj.Views.Pages
             resultWindow.NewTittle = "提示";
 
            
-                resultWindow.NewContent = "概率平衡数据已重置";
+                resultWindow.NewContent = "概率平衡已重置";
             
             
 

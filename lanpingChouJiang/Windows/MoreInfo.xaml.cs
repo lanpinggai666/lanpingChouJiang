@@ -17,7 +17,7 @@ namespace lanpingcj
     public partial class MoreInfo : FluentWindow
     {
 
-
+        public bool ToUpdatePage { get; set; } = false;
         public static bool IsBelowWindows10()
         {
             try
@@ -76,8 +76,8 @@ namespace lanpingcj
             }
             catch (Exception ex)
             {
-                return ("0.0.0", "false");
                 Debug.WriteLine(ex.Message);
+                return ("0.0.0", "false");
             }
         }
 
@@ -114,7 +114,7 @@ namespace lanpingcj
                 switch (Dialogresult)
                 {
                     case ContentDialogResult.Primary:
-                        await DownloadUpdate();
+                         ToUpdate();
                         break;
                     case ContentDialogResult.None:
                         // 用户点击了关闭按钮或按ESC
@@ -127,9 +127,10 @@ namespace lanpingcj
                 }
 
             }
-
-
-
+        }
+        public void ToUpdate()
+        {
+            NavigationView.Navigate(typeof(UpdatePage));
 
         }
         private string FormatFileSize(long bytes)
@@ -273,28 +274,45 @@ namespace lanpingcj
 
 
 
+        public async Task TopDialog()
+        {
+            var Dialog = new ContentDialog(RootContentDialogPresenter);
 
+            Dialog.Title = "需要重启                ";
+            Dialog.Content = $"你需要重启应用程序来应用更改。";
+            Dialog.PrimaryButtonText = "确定";
+            Dialog.CloseButtonText = "稍后";
+            Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;
+            var Dialogresult = await Dialog.ShowAsync();
+            switch (Dialogresult)
+            {
+                case ContentDialogResult.Primary:
+                    Process.Start(Process.GetCurrentProcess().MainModule.FileName);
+                    Environment.Exit(0);
+                    break;
+
+            }
+        }
         public MoreInfo()
         {
             //bool createdNew;
 
             InitializeComponent();
-
-
-
-
-            // 订阅 Loaded 事件，确保 UI 完全加载后再进行导航
-            // Loaded += OnWindowLoaded;
             Dispatcher.BeginInvoke(() =>
             {
                 try
                 {
-                    NavigationView.Navigate(typeof(SettingsPage));
+                    if (!ToUpdatePage)
+                    {
+                        NavigationView.Navigate(typeof(SettingsPage));
+                    }
+                    else
+                    {
+                        NavigationView.Navigate(typeof(UpdatePage));
+                    }
                 }
                 catch (System.Exception ex)
                 {
-                    // 如果导航失败，显示错误信息
-                    //Wpf.Ui.Controls.MessageBox.Show($"导航失败: {ex.Message}", "错误", Wpf.Ui.Controls.MessageBoxButton.OK, MessageBoxImage.Error);
                     Debug.WriteLine($"导航失败: {ex.Message}");
                 }
 

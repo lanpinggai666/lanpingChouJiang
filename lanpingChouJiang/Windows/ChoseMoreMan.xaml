@@ -86,10 +86,10 @@
                     BorderBrush="{DynamicResource ControlStrokeColorSecondaryBrush}"
                     BorderThickness="1" Height="75">
                 <StackPanel>
-                    <ui:TextBlock Text="• 选择人数后点击确定进行下一步操作"
+                    <ui:TextBlock Text="• 本操作不适用点名不重复和概率平衡"
                                FontSize="13"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                    <ui:TextBlock Text="• 如需取消选择，请点击取消按钮"
+                    <ui:TextBlock Text="• 也不计入点名不重复和概率平衡"
                                FontSize="13"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                Margin="0,3,0,0"/>

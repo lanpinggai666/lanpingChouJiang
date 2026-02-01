@@ -30,6 +30,32 @@
                 <ContentPresenter x:Name="RootContentDialogPresenter"
                   />
             </Grid>
+            <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon WindowArrowUp20}">
+                <ui:CardControl.Header>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <ui:TextBlock
+    Grid.Row="0"
+    FontTypography="Body"
+    Text="置于顶层" />
+                        <ui:TextBlock
+    Grid.Row="1"
+    Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+    Text="使用uiAcess权限来置于顶层。" />
+                    </Grid>
+                </ui:CardControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <ui:ToggleSwitch x:Name="TopmostToggleSwitch" 
+                          Checked="TopmostToggleSwitch_Checked"
+                          Unchecked="TopmostToggleSwitch_Unchecked"
+                          OffContent="关" OnContent="开"
+                          Margin="0,0,20,0"           />
+                   
+                </StackPanel>
+            </ui:CardControl>
             <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Speaker228}">
                 <ui:CardControl.Header>
                     <Grid>
@@ -50,10 +76,11 @@
                 <StackPanel Orientation="Horizontal">
                     <ui:ToggleSwitch x:Name="SoundToggleSwitch" 
                                      Checked="SoundToggleSwitch_Checked"
-                                     Unchecked="SoundToggleSwitch_Unchecked"/>
-                    <TextBlock Text="{Binding ElementName=SoundToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
-                               VerticalAlignment="Center"
-                               Margin="10,0,0,0"/>
+                                     Unchecked="SoundToggleSwitch_Unchecked"      
+                                     OffContent="关" OnContent="开"
+                                     Margin="0,0,20,0"
+/>
+                    
                 </StackPanel>
             </ui:CardControl>
 
@@ -84,10 +111,11 @@
                                     Grid.Column="1">
                             <ui:ToggleSwitch x:Name="DuplicateToggleSwitch"
                                          Checked="DuplicateToggleSwitch_Checked"
-                                         Unchecked="DuplicateToggleSwitch_Unchecked"/>
-                            <TextBlock Text="{Binding ElementName=DuplicateToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
-                                       VerticalAlignment="Center"
-                                       Margin="10,0,0,0"/>
+                                         Unchecked="DuplicateToggleSwitch_Unchecked"
+                                         OffContent="关" OnContent="开"
+                                         Margin="0,0,3,0"    
+/>
+
                         </StackPanel>
                     </Grid>
                 </ui:CardExpander.Header>
@@ -142,10 +170,11 @@
                 <StackPanel Orientation="Horizontal">
                     <ui:ToggleSwitch x:Name="TTSToggleSwitch"
                                      Checked="TTSToggleSwitch_Checked"
-                                     Unchecked="TTSToggleSwitch_Unchecked"/>
-                    <TextBlock Text="{Binding ElementName=TTSToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
-                               VerticalAlignment="Center"
-                               Margin="10,0,0,0"/>
+                                     Unchecked="TTSToggleSwitch_Unchecked"
+                                     OffContent="关" OnContent="开"
+                                     Margin="0,0,20,0"
+/>
+                    
                 </StackPanel>
             </ui:CardControl>
             <ui:CardExpander Margin="0,0,0,12" ContentPadding="0" Icon="{ui:SymbolIcon Scales20}">
@@ -177,10 +206,11 @@
                             Grid.Column="1">
                     <ui:ToggleSwitch x:Name="ProbabilityToggleSwitch"
                                      Checked="ProbabilityToggleSwitch_Checked"
-                                     Unchecked="ProbabilityToggleSwitch_Unchecked"/>
-                    <TextBlock Text="{Binding ElementName=ProbabilityToggleSwitch, Path=IsChecked, Converter={StaticResource BooleanToOnOffConverter}}"
-                               VerticalAlignment="Center"
-                               Margin="10,0,0,0"/>
+                                     Unchecked="ProbabilityToggleSwitch_Unchecked"
+                                     OffContent="关" OnContent="开"
+                                     Margin="0,0,3,0"
+/>
+                    
                 </StackPanel>
                 </Grid>
             </ui:CardExpander.Header>

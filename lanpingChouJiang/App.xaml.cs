@@ -1,8 +1,10 @@
-﻿using Microsoft.Toolkit.Uwp.Notifications;
+﻿using lanpingcj.Views.Pages;
+using Microsoft.Toolkit.Uwp.Notifications;
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Ink;
 using Windows.Foundation.Collections;
+using Wpf.Ui.Controls;
 
 namespace lanpingcj
 {
@@ -35,13 +37,7 @@ namespace lanpingcj
                             break;
 
                         case "RunApp":
-                            // 处理忽略警告逻辑
-                            Process.Start(new ProcessStartInfo
-                            {
-                                FileName = "latest.exe",
-                                UseShellExecute = true  // 使用系统外壳执行
-                            });
-                            break;
+
 
                         case "OpenMoreInfo":
                             var appDispatcher = Application.Current?.Dispatcher;
@@ -50,7 +46,12 @@ namespace lanpingcj
                                 appDispatcher.BeginInvoke(new Action(() =>
                                 {
                                     var moreInfo = new MoreInfo();
+                                    var UpdatePage = new UpdatePage();
                                     moreInfo.ShowDialog();
+                                    moreInfo.ToUpdatePage = true;
+                                    moreInfo.NavigationView.Navigate(typeof(UpdatePage));
+                                    UpdatePage.FromOther = true;
+
                                 }));
                             }
                             else

@@ -91,5 +91,29 @@ namespace lanpingcj.Properties {
                 return ((string)(this["ThisVersion"]));
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Top {
+            get {
+                return ((bool)(this["Top"]));
+            }
+            set {
+                this["Top"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("20")]
+        public double Updatetime {
+            get {
+                return ((double)(this["Updatetime"]));
+            }
+            set {
+                this["Updatetime"] = value;
+            }
+        }
     }
 }

@@ -73,6 +73,7 @@ namespace lanpingcj
         // 4. 防止WPF窗口重新获取焦点 - 释放当前窗口焦点
         [DllImport("user32.dll")]
         private static extern IntPtr SetFocus(IntPtr hWnd);
+        private DispatcherTimer _updateTimer;
         #endregion
         #region 结构体定义（SendInput 所需）
         // SendInput所需的输入结构体
@@ -363,7 +364,7 @@ public static bool IsBelowWindows10()
             {
                 ReleaseMutex();
             };
-
+            InitializeTimer();
             int Width = 0;
             int Height = 0;
             InitializeComponent();
@@ -431,6 +432,37 @@ public static bool IsBelowWindows10()
             
 
         }
+        private void InitializeTimer()
+        {
+
+            _updateTimer = new DispatcherTimer();
+            _updateTimer.Interval = TimeSpan.FromMinutes(Properties.Settings.Default.Updatetime);
+            _updateTimer.Tick += UpdateTimer_Tick;
+            _updateTimer.Start();
+        }
+        private async void UpdateTimer_Tick(object sender, EventArgs e)
+        {
+            try
+            {
+                await CheckUpdate();
+                var result = await GetVersion();
+                bool mandatory = bool.Parse(result.Mandatory);
+                if (mandatory)
+                {
+                    MoreInfo moreInfo = new MoreInfo();
+                    moreInfo.Closed += (sender, e) =>
+                    {
+                        Process.GetCurrentProcess().Kill();
+
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                string error = $"错误: {ex.Message}\n请检查Internet连接和对Github的连通性。";
+                await ShowSimpleToast("更新出错", error, "Download");
+            }
+        }        
         #endregion
         #region 核心功能：WPF KeyDown事件处理
         /// <summary>

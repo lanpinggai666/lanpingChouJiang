@@ -85,7 +85,7 @@ namespace lanpingcj.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2.1.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2.1.1")]
         public string ThisVersion {
             get {
                 return ((string)(this["ThisVersion"]));
@@ -113,6 +113,42 @@ namespace lanpingcj.Properties {
             }
             set {
                 this["Updatetime"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsDownloading {
+            get {
+                return ((bool)(this["IsDownloading"]));
+            }
+            set {
+                this["IsDownloading"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int DownloadProgress {
+            get {
+                return ((int)(this["DownloadProgress"]));
+            }
+            set {
+                this["DownloadProgress"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public long DownloadTotalSize {
+            get {
+                return ((long)(this["DownloadTotalSize"]));
+            }
+            set {
+                this["DownloadTotalSize"] = value;
             }
         }
     }

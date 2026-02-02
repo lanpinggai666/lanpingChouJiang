@@ -279,7 +279,7 @@ namespace lanpingcj
             var Dialog = new ContentDialog(RootContentDialogPresenter);
 
             Dialog.Title = "需要重启                ";
-            Dialog.Content = $"你需要重启应用程序来应用更改。";
+            Dialog.Content = $"你需要重启应用程序来应用更改。\n置于顶层需要管理员权限并关闭UAC，如果你在更改以后打不开本软件，\n请关闭UAC并重启您的电脑或者运行应用程序安装目录下的重置.bat";
             Dialog.PrimaryButtonText = "确定";
             Dialog.CloseButtonText = "稍后";
             Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;

@@ -149,12 +149,7 @@ namespace lanpingcj.Views.Pages
 
                     if (!supportsResume && existingFileSize > 0)
                     {
-                        // 服务器不支持断点续传，询问用户是否重新下载
-                       
-
-                       
-
-                        // 删除旧文件，重新下载
+                        
                         try
                         {
                             File.Delete(localFileName);
@@ -175,24 +170,21 @@ namespace lanpingcj.Views.Pages
                     long? totalBytes = response.Content.Headers.ContentLength;
                     long actualTotalBytes = totalBytes ?? 0;
 
-                    // 如果是断点续传，计算总大小
                     if (supportsResume)
                     {
                         actualTotalBytes += existingFileSize;
                     }
 
-                    // 保存总大小
                     Properties.Settings.Default.DownloadTotalSize = actualTotalBytes;
                     Properties.Settings.Default.Save();
 
-                    // 使用 Append 模式打开文件（如果支持断点续传）
                     FileMode fileMode = (supportsResume && existingFileSize > 0) ? FileMode.Append : FileMode.Create;
 
                     using (var stream = await response.Content.ReadAsStreamAsync())
                     using (var fileStream = new FileStream(localFileName, fileMode, FileAccess.Write, FileShare.None, 8192, true))
                     {
                         byte[] buffer = new byte[8192];
-                        long totalBytesRead = existingFileSize; // 从已下载的大小开始
+                        long totalBytesRead = existingFileSize; 
                         int bytesRead;
 
                         while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, downloadCancellation.Token)) > 0)
@@ -208,7 +200,7 @@ namespace lanpingcj.Views.Pages
                                 ProgressBar.Visibility = Visibility.Collapsed;
                                 UpdateVersionCard.Visibility = Visibility.Visible;
                                 InstallButton.Content = $"{percentage}%";
-                                CheckUpdateButton.Content = $"下载中 ";
+                                CheckUpdateButton.Content = $"全部安装";
                                 StateText.Text = $"更新可用";
 
                                 // 保存进度
@@ -252,16 +244,20 @@ namespace lanpingcj.Views.Pages
         // 显示下载完成状态
         private void ShowDownloadComplete()
         {
+            StateText.Text = "更新可用";
+            ProgressBar.Visibility = Visibility.Collapsed;
             InstallButton.Content = "安装";
             InstallButton.IsEnabled = true;
-            InstallButton.Click -= InstallButton_Click;
+            InstallButton.Click -= OnCheckUpdatesClick;
+            InstallButton.Click -= Install;
+            InstallButton.Click -= CheckUpdateButton_InstallClick; 
             InstallButton.Click += InstallButton_Click;
 
             CheckUpdateButton.Click -= OnCheckUpdatesClick;
             CheckUpdateButton.Click -= Install;
             CheckUpdateButton.Click -= CheckUpdateButton_InstallClick;
             CheckUpdateButton.Click += CheckUpdateButton_InstallClick;
-            CheckUpdateButton.Content = "安装";
+            CheckUpdateButton.Content = "全部安装";
             CheckUpdateButton.IsEnabled = true;
 
             // 标记下载完成
@@ -269,8 +265,6 @@ namespace lanpingcj.Views.Pages
             Properties.Settings.Default.DownloadProgress = 100;
             Properties.Settings.Default.Save();
 
-            StateText.Text = "更新可用";
-            ProgressBar.Visibility = Visibility.Hidden;
         }
 
         private void InstallButton_Click(object sender, RoutedEventArgs e)
@@ -316,7 +310,7 @@ namespace lanpingcj.Views.Pages
             }
             catch (Exception ex)
             {
-               // MessageBox.Show($"启动安装程序失败：{ex.Message}", "错误", MessageBoxButton.OK, MessageBoxImage.Error);
+                Debug.WriteLine(ex.Message);          
             }
         }
 
@@ -339,7 +333,7 @@ namespace lanpingcj.Views.Pages
             catch (Exception ex)
             {
                 Updateerror(ex.Message);
-                UpdateVersionCard.Visibility = Visibility.Visible;
+                UpdateVersionCard.Visibility = Visibility.Collapsed;
             }
             finally
             {
@@ -420,6 +414,8 @@ namespace lanpingcj.Views.Pages
             LastCheckTimeText.Visibility = Visibility.Hidden;
             StateIcon.Visibility = Visibility.Hidden;
             ProgressBar.Visibility = Visibility.Visible;
+           ErrorCard.Visibility = Visibility.Collapsed;
+            UpdateVersionCard.Visibility = Visibility.Collapsed;
         }
 
         private void UpdateText()
@@ -427,7 +423,13 @@ namespace lanpingcj.Views.Pages
             StateText.Text = "你使用的是最新版本";
             LastCheckTimeText.Visibility = Visibility.Visible;
             StateIcon.Visibility = Visibility.Visible;
+            ErrorCard.Visibility = Visibility.Collapsed;
             ProgressBar.Visibility = Visibility.Hidden;
+            StateIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.CheckmarkCircle24;
+            BrushConverter brushConverter = new BrushConverter();
+            Brush? brush = (Brush?)brushConverter.ConvertFromString("#37B24D");
+            StateIcon.Foreground = brush;
+            UpdateVersionCard.Visibility = Visibility.Collapsed;
         }
 
         private void HaveUpdateText()
@@ -435,32 +437,34 @@ namespace lanpingcj.Views.Pages
             StateText.Text = "更新可用";
             LastCheckTimeText.Visibility = Visibility.Visible;
             StateIcon.Visibility = Visibility.Hidden;
+            ErrorCard.Visibility = Visibility.Collapsed;
+
             ProgressBar.Visibility = Visibility.Hidden;
             CheckUpdateButton.Content = "下载";
-            CheckUpdateButton.Click -= OnCheckUpdatesClick; // 移除检查更新事件
-            CheckUpdateButton.Click -= Install; // 移除可能存在的Install事件
-            CheckUpdateButton.Click += Install; // 添加下载事件
+            CheckUpdateButton.Click -= OnCheckUpdatesClick; 
+            CheckUpdateButton.Click -= Install; 
+            CheckUpdateButton.Click += Install; 
             CheckUpdateButton.IsEnabled = true;
         }
 
         private void Updateerror(string error)
         {
             StateText.Text = "更新出错";
+            CheckUpdateButton.IsEnabled = true;
             StateIcon.Visibility = Visibility.Visible;
             ProgressBar.Visibility = Visibility.Hidden;
             CheckUpdateButton.Content = "重试";
-            CheckUpdateButton.Click -= Install; // 移除下载事件
-            CheckUpdateButton.Click -= OnCheckUpdatesClick; // 移除可能存在的检查更新事件
-            CheckUpdateButton.Click += OnCheckUpdatesClick; // 重新添加检查更新事件
+            CheckUpdateButton.Click -= Install; 
+            CheckUpdateButton.Click -= OnCheckUpdatesClick; 
+            CheckUpdateButton.Click += OnCheckUpdatesClick; 
             StateIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.ErrorCircle24;
-
             BrushConverter brushConverter = new BrushConverter();
             Brush? brush = (Brush?)brushConverter.ConvertFromString("#E53935");
             StateIcon.Foreground = brush;
 
             ErrorCard.Visibility = Visibility.Visible;
             errorText.Text = $"更新出错：{error}请检查Internet连接和对Github的连通性！";
-
+            UpdateVersionCard.Visibility = Visibility.Hidden;
             // 重置下载状态
             isDownloading = false;
             Properties.Settings.Default.IsDownloading = false;

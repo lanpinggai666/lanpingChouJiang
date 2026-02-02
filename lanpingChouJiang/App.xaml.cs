@@ -37,7 +37,18 @@ namespace lanpingcj
                             break;
 
                         case "RunApp":
+                           
+                                Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = "latest.exe",
+                                    UseShellExecute = true
+                                });
 
+                                // 安装后重置下载状态
+                            
+                            
+                    
+                    break;
 
                         case "OpenMoreInfo":
                             var appDispatcher = Application.Current?.Dispatcher;

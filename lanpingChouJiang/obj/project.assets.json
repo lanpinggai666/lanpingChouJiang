@@ -710,7 +710,7 @@
     "d:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
-    "version": "2.0.0",
+    "version": "2.1.1",
     "restore": {
       "projectUniqueName": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\lanpingChouJiang.csproj",
       "projectName": "lanpingcj",

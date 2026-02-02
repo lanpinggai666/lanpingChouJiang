@@ -26,6 +26,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
@@ -63,12 +64,12 @@
                                   Text="上次检查时间: 今天" 
                                   Visibility="Visible"/>
                     <ProgressBar x:Name="ProgressBar" 
-              Grid.Row="1"
-              IsIndeterminate="True" 
-              Margin="0,8,0,0" 
-              Width="480"
-              HorizontalAlignment="Left"
-              Visibility="Collapsed" />
+                                 Grid.Row="1"
+                                 IsIndeterminate="True" 
+                                 Margin="0,8,0,0" 
+                                 Width="480"
+                                 HorizontalAlignment="Left"
+                                 Visibility="Collapsed" />
                 </StackPanel>
 
                 <Grid Grid.Column="2" Grid.Row="0" VerticalAlignment="Center" MinWidth="150">
@@ -82,14 +83,12 @@
                                Appearance="Primary" 
                                Padding="35,8" 
                                HorizontalAlignment="Right"
-                               Click="OnCheckUpdatesClick" IsEnabled="True"
-                               />
-
-                   
+                               Click="OnCheckUpdatesClick" 
+                               IsEnabled="True"/>
                 </Grid>
 
                 <ui:CardControl x:Name="UpdateVersionCard" 
-                                Grid.Row="1" 
+                                Grid.Row="2" 
                                 Grid.ColumnSpan="3" 
                                 Margin="0,20,0,0" 
                                 Visibility="Collapsed">
@@ -111,28 +110,28 @@
                         </Grid>
                     </ui:CardControl.Header>
                 </ui:CardControl>
+
                 <ui:CardControl x:Name="ErrorCard" 
-                Grid.Row="1" 
-                Grid.ColumnSpan="3" 
-                Margin="0,20,0,0" 
-                Visibility="Collapsed"
-                Icon="{ui:SymbolIcon ErrorCircle24}">
+                                Grid.Row="1" 
+                                Grid.ColumnSpan="3" 
+                                Margin="0,20,0,0" 
+                                Visibility="Collapsed"
+                                Icon="{ui:SymbolIcon ErrorCircle24}">
                     <ui:CardControl.Header>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <ui:TextBlock FontSize="14" 
-                          VerticalAlignment="Top" 
-                          x:Name="errorText" 
-                          TextWrapping="Wrap"
-                          MaxWidth="700"/>
+                                          VerticalAlignment="Top" 
+                                          x:Name="errorText" 
+                                          TextWrapping="Wrap"/>
                         </Grid>
                     </ui:CardControl.Header>
                 </ui:CardControl>
-                </Grid>
+            </Grid>
 
-                <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Text="更多选项" />
+            <ui:TextBlock Margin="0,0,0,8" FontTypography="BodyStrong" Text="更多选项" />
 
             <ui:CardControl Icon="{ui:SymbolIcon Timer24}">
                 <ui:CardControl.Header>

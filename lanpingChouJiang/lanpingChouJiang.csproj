@@ -8,7 +8,7 @@
     <UseWPF>true</UseWPF>
     <ApplicationIcon>headimg_dl_256x256.ico</ApplicationIcon>
     <AssemblyName>lanpingcj</AssemblyName>
-    <Version>2.0.0</Version>
+    <Version>2.1.1</Version>
     <Authors>蓝屏钙，好喝的钙</Authors>
     <SignAssembly>False</SignAssembly>
     <AssemblyOriginatorKeyFile>C:\Users\Amdox\Documents\签名\代码签名证书制作工具\root.pvk</AssemblyOriginatorKeyFile>

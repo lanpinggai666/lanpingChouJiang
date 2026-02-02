@@ -85,7 +85,7 @@ namespace lanpingcj.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2.1.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2.1.0")]
         public string ThisVersion {
             get {
                 return ((string)(this["ThisVersion"]));

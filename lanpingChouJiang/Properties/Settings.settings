@@ -18,7 +18,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="ThisVersion" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">2.1.1</Value>
+      <Value Profile="(Default)">2.1.0</Value>
     </Setting>
     <Setting Name="Top" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>

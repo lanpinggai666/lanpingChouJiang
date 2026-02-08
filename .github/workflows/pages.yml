@@ -1,23 +1,135 @@
-name: Deploy GitHub Pages
+name: Blue Screen Lottery - Portable Only
 
 on:
   push:
-    branches:
-      - master  
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: windows-latest
+
+    env:
+      Solution_Name: lanpingChouJiang.sln
+      Project_Name: lanpingChouJiang
+      Project_Path: lanpingChouJiang\lanpingChouJiang.csproj
+      App_Version: 2.1.1.${{ github.run_number }}
+      App_Exe_Name: lanpingcj.exe
+      Output_Dir: Output/BlueScreenLottery_Portable
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Build
-        run: npm install && npm run docs:build # 安装依赖并构建
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
 
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          token: ${{ secrets.ACCESS_TOKEN }} # 使用你设置的 Token
-          branch: master
-          folder: docs/.vuepress/dist 
+    - name: Restore and Build
+      run: |
+        dotnet restore $env:Solution_Name
+        dotnet build $env:Solution_Name -c Release --no-restore
+
+    - name: Publish Portable Application
+      run: |
+        # 清理并创建输出目录
+        if (Test-Path "${{ env.Output_Dir }}") {
+          Remove-Item -Path "${{ env.Output_Dir }}" -Recurse -Force
+        }
+        
+        # 发布便携版应用程序（不包含.NET运行时）
+        dotnet publish $env:Project_Path `
+          -c Release `
+          -r win-x64 `
+          --self-contained false `
+          /p:PublishSingleFile=false `
+          /p:IncludeNativeLibrariesForSelfExtract=true `
+          /p:PublishReadyToRun=false `
+          -o ${{ env.Output_Dir }}
+        
+        Write-Host "✅ Portable application published: ${{ env.Output_Dir }}"
+        Write-Host "File list:"
+        Get-ChildItem -Path ${{ env.Output_Dir }} | Format-Table Name, Length
+
+    # MSIX 打包步骤
+    - name: Create MSIX Package
+      uses: microsoft/msix-bundler@v1
+      with:
+        # 输入目录（发布目录）
+        input-folder: ${{ env.Output_Dir }}
+        
+        # 输出文件名
+        output-file: ${{ env.Output_Dir }}/lanpingChouJiang_Portable_${{ env.App_Version }}.msix
+        
+        # 应用程序信息
+        package-display-name: 蓝屏抽奖机
+        package-name: BlueScreenLottery.Portable
+        package-version: ${{ env.App_Version }}
+        publisher: CN=BlueScreenCalcium
+        
+        # 入口点
+        entry-point: ${{ env.App_Exe_Name }}
+        
+        # 图标
+        icon: icon.ico
+        
+        # 架构
+        architecture: x64
+        
+        # 功能权限
+        capabilities: |
+          internetClient
+          privateNetworkClientServer
+        
+        # 描述
+        description: 蓝屏抽奖机
+
+    # 创建便携版ZIP包（可选，方便下载所有文件）
+    - name: Create Portable ZIP
+      run: |
+        $zipFileName = "BlueScreenLottery_Portable_${{ env.App_Version }}.zip"
+        $zipPath = "${{ env.Output_Dir }}/$zipFileName"
+        
+        # 使用Compress-Archive创建ZIP文件
+        Compress-Archive -Path "${{ env.Output_Dir }}\*" -DestinationPath $zipPath -CompressionLevel Optimal
+        
+        Write-Host "✅ Portable ZIP created: $zipFileName"
+        Write-Host "File size: $([math]::Round((Get-Item $zipPath).Length / 1MB, 2)) MB"
+
+    # 验证生成的文件
+    - name: Verify Generated Files
+      run: |
+        Write-Host "=== Generated Files ==="
+        Get-ChildItem -Path ${{ env.Output_Dir }} | Format-Table Name, Length, @{Name="Type";Expression={
+          if ($_.Extension -eq ".msix") { "MSIX Package" }
+          elseif ($_.Extension -eq ".zip") { "Portable ZIP" }
+          elseif ($_.Extension -eq ".exe") { "Application" }
+          elseif ($_.Extension -eq ".dll") { "Library" }
+          else { "Other" }
+        }}
+
+    # 上传便携版应用程序文件夹（所有文件）
+    - name: Upload Portable Application
+      uses: actions/upload-artifact@v4
+      with:
+        name: lanpingChouJiang_Portable_${{ env.App_Version }}
+        path: ${{ env.Output_Dir }}
+        retention-days: 30
+
+    # 单独上传MSIX包（如果需要）
+    - name: Upload MSIX Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: lanpingChouJiang_Portable_MSIX_${{ env.App_Version }}
+        path: ${{ env.Output_Dir }}/BlueScreenLottery_Portable_${{ env.App_Version }}.msix
+        retention-days: 30
+
+    # 单独上传ZIP包（如果需要）
+    - name: Upload Portable ZIP
+      uses: actions/upload-artifact@v4
+      with:
+        name: lanpingChouJiang_Portable_ZIP_${{ env.App_Version }}
+        path: ${{ env.Output_Dir }}/lanpingChouJiang_Portable_${{ env.App_Version }}.zip
+        retention-days: 30

@@ -56,7 +56,7 @@
                            x:Name="Context"/>
 
                     <!-- 额外内容 - 在上部分底部 -->
-                    <TextBlock Text=""
+                    <TextBlock Text="额外内容"
                            Grid.Row="2"
                            HorizontalAlignment="Left"
                            VerticalAlignment="Bottom"

@@ -39,21 +39,15 @@
                     Width="60">
                 <Button.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="更多" Click="MenuItem_About_Click" Icon="{ui:SymbolIcon Share20}"/>
+                        <MenuItem Header="更多" Click="More_Click" Icon="{ui:SymbolIcon Share20}"/>
                        
-                        <MenuItem Header="只抽男的" Click="Only_Boy" x:Name="Boy" Icon="{ui:SymbolIcon Person20}"/>
-                        <MenuItem Header="只抽女的" Click="Only_Girl" x:Name="Girl" Icon="{ui:SymbolIcon Person20}"/>
-                        <MenuItem Header="打开名单" Click="Open_mindan" Icon="{ui:SymbolIcon FolderOpen20}"/>
-                        <MenuItem Header="生物特调" Click="Shengwu" x:Name="ShengwuName" Icon="{ui:SymbolIcon AnimalRabbit20}"/>
+                        <MenuItem Header="打开名单" Click="Open_mingdan" Icon="{ui:SymbolIcon FolderOpen20}"/>
                         <MenuItem Header="一次抽N个" Click="Open_More_Man" Icon="{ui:SymbolIcon People20}"/>
                         <MenuItem Header="退出" Click="MenuItem_Exit_Click" Icon="{ui:SymbolIcon ArrowExit20}"/>
                     </ContextMenu>
                 </Button.ContextMenu>
-
-                <!-- 按钮内容 -->
                 <Button.Content>
                     <Grid>
-                        <!-- 结果显示区域 - 充满整个按钮 -->
                         <TextBlock Name="resultText" 
                                    Text="一键抽奖" 
                                    Foreground="White" 
@@ -78,8 +72,5 @@
                 </Button.Content>
             </Button>
         </Border>
-
-        <!-- ContentPresenter 放到最后，覆盖在最上层 -->
-
     </Grid>
 </Window>

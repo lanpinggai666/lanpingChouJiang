@@ -16,13 +16,12 @@
     ui:Design.Foreground="{DynamicResource ApplicationBackgroundBrush}"
     ExtendsContentIntoTitleBar="True"
     Foreground="{DynamicResource ApplicationBackgroundBrush}"
+    Icon="/headimg_dl.jpg"
     WindowBackdropType="Mica"
     WindowCornerPreference="Round"
     WindowStartupLocation="CenterScreen"
-    mc:Ignorable="d"
-    Icon="/headimg_dl.jpg">
+    mc:Ignorable="d">
 
-    <!-- 确保 Grid 随窗口伸缩 -->
     <Grid
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch"
@@ -32,39 +31,48 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <ui:NavigationView 
-            x:Name="NavigationView" 
+        <ui:NavigationView
+            x:Name="NavigationView"
             Grid.Row="1"
-            IsBackButtonVisible="Collapsed"
-            Background="Transparent">
+            Background="Transparent"
+            IsBackButtonVisible="Collapsed">
 
             <ui:NavigationView.Header>
-                <ui:BreadcrumbBar Margin="42,32,0,0" FontSize="28" FontWeight="DemiBold" />
+                <ui:BreadcrumbBar
+                    Margin="42,32,0,0"
+                    FontSize="28"
+                    FontWeight="DemiBold" />
             </ui:NavigationView.Header>
 
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem
+                    Background="Transparent"
                     Content="设置"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:SettingsPage}"
-                    Background="Transparent">
-                     
+                    TargetPageType="{x:Type pages:SettingsPage}">
+
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Settings24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
-                
+
                 <ui:NavigationViewItem
-         Content="更新"
-         NavigationCacheMode="Enabled"
-         TargetPageType="{x:Type pages:UpdatePage}"
-         Background="Transparent">
+                    Background="Transparent"
+                    Content="更新"
+                    NavigationCacheMode="Enabled"
+                    TargetPageType="{x:Type pages:UpdatePage}">
 
                     <ui:NavigationViewItem.Icon>
-                        <ui:SymbolIcon Symbol="ArrowSync20" 
-                Filled="True" 
-                >
-                        </ui:SymbolIcon>
+                        <ui:SymbolIcon Filled="True" Symbol="ArrowSync20" />
+                    </ui:NavigationViewItem.Icon>
+                </ui:NavigationViewItem>
+                <ui:NavigationViewItem
+                    Background="Transparent"
+                    Content="名单管理"
+                    NavigationCacheMode="Enabled"
+                    TargetPageType="{x:Type pages:StudentManagePage}">
+                    <ui:NavigationViewItem.Icon>
+                        <ui:SymbolIcon Symbol="People24" />
                     </ui:NavigationViewItem.Icon>
                 </ui:NavigationViewItem>
 
@@ -73,14 +81,13 @@
 
         <ui:TitleBar
             Title="蓝屏抽奖机"
-            Icon="/headimg_dl.jpg"
-            Grid.Row="0"/>
+            Grid.Row="0"
+            Icon="/headimg_dl.jpg" />
 
-        <ContentPresenter
+        <ui:ContentDialogHost
             x:Name="RootContentDialogPresenter"
-            Grid.RowSpan="2"
-            HorizontalAlignment="Stretch"
-            VerticalAlignment="Stretch"
-            />
+            Grid.RowSpan="99"
+            Grid.ColumnSpan="99"
+            Panel.ZIndex="999" />
     </Grid>
 </ui:FluentWindow>

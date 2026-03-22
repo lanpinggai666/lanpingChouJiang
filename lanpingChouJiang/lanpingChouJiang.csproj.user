@@ -4,6 +4,9 @@
     <_LastSelectedProfileId>E:\杂物\项目\WpfApp2 -WPF UI -github\lanpingChouJiang\Properties\PublishProfiles\ClickOnceProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="Views\Pages\StudentManagePage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\Pages\UpdatePage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

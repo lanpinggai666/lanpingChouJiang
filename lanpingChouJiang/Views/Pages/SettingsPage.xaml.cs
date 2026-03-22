@@ -1,4 +1,4 @@
-using System;
+Ôªøusing System;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -8,202 +8,537 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Data;
 using Wpf.Ui.Controls;
-using System.Linq;  // “—æ≠¥Ê‘⁄
-using System.Windows;  // »∑±£¥Ê‘⁄
+using System.Linq;
+using System.Windows;
+using Microsoft.Win32;
+using System.Text.Json;
+using System.Collections.Specialized;
+using System.Collections.Generic;
 
 namespace lanpingcj.Views.Pages
 {
-   
     public partial class SettingsPage : Page
     {
-
         public string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        public class BooleanToOnOffConverter : IValueConverter
+        public string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "lanpingcj_mindan").Replace("\\", "\\\\");
+        private bool _isUpdatingUI = false;
+
+        public class ConfigFileItem
         {
-            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            public string FilePath { get; set; } = string.Empty;
+            public string ConfigName { get; set; } = string.Empty;
+            public bool IsActionItem { get; set; }
+            public string ActionType { get; set; } = string.Empty;
+            public Wpf.Ui.Controls.SymbolRegular Icon { get; set; } = Wpf.Ui.Controls.SymbolRegular.Document20;
+
+            public string DisplayText
             {
-                return (bool)value ? "ø™∆Ù" : "πÿ±’";
+                get
+                {
+                    if (IsActionItem) return ConfigName;
+                    return string.IsNullOrEmpty(ConfigName) ? (Path.GetFileName(FilePath) ?? string.Empty) : ConfigName;
+                }
             }
 
-            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            public override string ToString() => DisplayText;
+        }
+
+        private ContentDialogHost? GetDialogHost()
+        {
+            var window = Window.GetWindow(this);
+            return window?.FindName("RootContentDialogPresenter") as ContentDialogHost;
+        }
+
+        private bool IsValidProgramJson(string filePath)
+        {
+            try
             {
-                throw new NotImplementedException();
+                string jsonString = File.ReadAllText(filePath, Encoding.UTF8);
+                using (JsonDocument doc = JsonDocument.Parse(jsonString))
+                {
+                    return doc.RootElement.TryGetProperty("ConfigName", out _) ||
+                           doc.RootElement.TryGetProperty("mindan_path", out _) ||
+                           doc.RootElement.TryGetProperty("Tittle", out _);
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
+
+        private string GenerateRandomFileName(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()) + ".txt";
+        }
+
         public async Task<(string Version, string Mandatory)> GetVersion()
         {
-            string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
+            string url = "https://update.choujiang.lanpinggai.top/version";
 
             using HttpClient client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
 
             string content = await client.GetStringAsync(url);
-            Debug.WriteLine($"‘≠ ºƒ⁄»›: {content}");
 
             using StringReader reader = new StringReader(content);
-            string version = reader.ReadLine()?.Trim() ?? string.Empty;
-            string mandatory = reader.ReadLine()?.Trim() ?? string.Empty;
+            string version = (await reader.ReadLineAsync())?.Trim() ?? string.Empty;
+            string mandatory = (await reader.ReadLineAsync())?.Trim() ?? string.Empty;
 
-            // “ª¥Œ–‘∑µªÿ¡Ω∏ˆ÷µ
             return (version, mandatory);
         }
+        private async Task PromptRestart()
+        {
+            var host = GetDialogHost();
+            if (host == null) return;
 
-        
+            var dialog = new ContentDialog(host)
+            {
+                Title = "ÈÖçÁΩÆÊñá‰ª∂Â∑≤Êõ¥Êñ∞",
+                Content = "ËØ∑ÈáçÂêØÂ∫îÁî®Á®ãÂ∫è‰ª•‰øùÂ≠òÊõ¥ÊîπÔºÅ                                       ",
+                PrimaryButtonText = "Á´ãÂç≥ÈáçÂêØ",
+                CloseButtonText = "Á®çÂêé",
+                PrimaryButtonAppearance = ControlAppearance.Primary
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+
+                string? exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
+                if (!string.IsNullOrEmpty(exePath))
+                {
+                    System.Diagnostics.Process.Start(exePath);
+                    Application.Current.Shutdown();
+                }
+            }
+        }
         public async Task CheckUpdate()
         {
-
             var result = await GetVersion();
 
+            if (!bool.TryParse(result.Mandatory, out bool mandatory)) mandatory = false;
 
-
-            bool mandatory = bool.Parse(result.Mandatory);//«ø÷∆∏¸–¬
             Version LatestVersion = new Version(result.Version);
-            Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion);
-            Debug.WriteLine($"µ±«∞∞Ê±æ: {ThisVersion}, ◊Ó–¬∞Ê±æ: {LatestVersion}, «ø÷∆∏¸–¬: {mandatory}");
+            Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion ?? "1.0.0");
+
             if (LatestVersion > ThisVersion)
             {
-                var Dialog = new ContentDialog(RootContentDialogPresenter);
+                var host = GetDialogHost();
+                if (host == null) return;
 
-                Dialog.Title = "”––¬∞Ê±æø…”√!";
-                Dialog.Content = $"µ±«∞∞Ê±æ£∫{ThisVersion}\n◊Ó–¬∞Ê±æ£∫{LatestVersion}\n";
-                Dialog.PrimaryButtonText = "»∑∂®";
-                Dialog.CloseButtonText = "πÿ±’";
+                var Dialog = new ContentDialog(host);
+
+                Dialog.Title = "ÊúâÊñ∞ÁâàÊú¨ÂèØÁî®!";
+                Dialog.Content = $"ÂΩìÂâçÁâàÊú¨Ôºö{ThisVersion}\nÊúÄÊñ∞ÁâàÊú¨Ôºö{LatestVersion}\n";
+                Dialog.PrimaryButtonText = "Á°ÆÂÆö";
+                Dialog.CloseButtonText = "ÂÖ≥Èó≠";
                 Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;
                 Dialog.SecondaryButtonAppearance = ControlAppearance.Secondary;
+
                 var Dialogresult = await Dialog.ShowAsync();
-                switch (Dialogresult)
+                if (Dialogresult == ContentDialogResult.Primary)
                 {
-                    case ContentDialogResult.Primary:
-                        await DownloadUpdate();
-                        break;
-                    case ContentDialogResult.None:
-                        // ”√ªßµ„ª˜¡Àπÿ±’∞¥≈•ªÚ∞¥ESC
-                        break;
+                    await DownloadUpdate();
                 }
-
             }
-
-
-
-
         }
+
         public async Task DownloadUpdate()
         {
-            string downloadUrl = "https://lanpinggai66-my.sharepoint.com/personal/lanpinggai666_lanpinggai66_onmicrosoft_com/_layouts/52/download.aspx?share=IQDkSqcZUZCtQJOHJJN8yNrpAV2HSnKjGXBBRqOOkY2D4IQ";
+            string downloadUrl = "https://update.choujiang.lanpinggai.top/latest.exe";
             string localFileName = "latest.exe";
 
             try
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    Debug.WriteLine("’˝‘⁄œ¬‘ÿŒƒº˛...");
-
-                    // “Ï≤Ωœ¬‘ÿŒƒº˛
                     byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
-
-                    // ±£¥ÊŒƒº˛
                     await File.WriteAllBytesAsync(localFileName, fileBytes);
-                    Console.WriteLine("œ¬‘ÿÕÍ≥…£°");
                 }
 
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = localFileName,
-                    UseShellExecute = true  
+                    UseShellExecute = true
                 });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"¥ÌŒÛ: {ex.Message}");
+                Debug.WriteLine($"ÈîôËØØ: {ex.Message}");
             }
         }
+
         public SettingsPage()
         {
             InitializeComponent();
-            LoadCurrentSoundSetting();
-            LoadDuplicateSetting();
-            LoadTTSSetting();
-            LoadgailvSetting();
-            LoadTopmostSetting();
-            version.Text=Properties.Settings.Default.ThisVersion;
-            version2.Text =$"v{Properties.Settings.Default.ThisVersion}";
+
+            string currentConfig = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
+            if (string.IsNullOrEmpty(currentConfig) || !File.Exists(currentConfig))
+            {
+                currentConfig = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Properties.Settings.Default.defaultConfig ?? "config.json");
+            }
+
+            ValidateAndApplyConfig(currentConfig);
+
+            version.Text = Properties.Settings.Default.ThisVersion ?? "1.0.0";
+            version2.Text = $"v{Properties.Settings.Default.ThisVersion ?? "1.0.0"}";
         }
 
-        // º”‘ÿµ±«∞…˘“Ù…Ë÷√
-        private void LoadCurrentSoundSetting()
+        private void LoadConfigHistory()
+        {
+            if (Properties.Settings.Default.ConfigHistory == null)
+            {
+                Properties.Settings.Default.ConfigHistory = new StringCollection();
+            }
+
+            var originalList = Properties.Settings.Default.ConfigHistory.Cast<string>().ToList();
+            var cleanedList = originalList
+                .Where(path =>
+                    !string.IsNullOrWhiteSpace(path) &&
+                    File.Exists(path) &&
+                    Path.GetExtension(path).Equals(".json", StringComparison.OrdinalIgnoreCase) &&
+                    !path.EndsWith(".deps.json") &&
+                    !path.EndsWith(".runtimeconfig.json")
+                )
+                .Distinct()
+                .ToList();
+
+            Properties.Settings.Default.ConfigHistory.Clear();
+            foreach (var path in cleanedList)
+            {
+                Properties.Settings.Default.ConfigHistory.Add(path);
+            }
+
+            string currentConfig = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
+            if (string.IsNullOrEmpty(currentConfig) || !File.Exists(currentConfig))
+            {
+                currentConfig = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Properties.Settings.Default.defaultConfig ?? "config.json");
+            }
+
+            if (File.Exists(currentConfig) && !Properties.Settings.Default.ConfigHistory.Contains(currentConfig))
+            {
+                Properties.Settings.Default.ConfigHistory.Add(currentConfig);
+                cleanedList.Add(currentConfig);
+            }
+
+            Properties.Settings.Default.Save();
+
+            var displayItems = new List<ConfigFileItem>();
+            ConfigFileItem? currentItem = null;
+
+            foreach (var path in cleanedList)
+            {
+                string name = string.Empty;
+                try
+                {
+                    string jsonString = File.ReadAllText(path, Encoding.UTF8);
+                    Config? config = JsonSerializer.Deserialize<Config>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    if (config != null) name = config.ConfigName ?? string.Empty;
+                }
+                catch { }
+
+                var item = new ConfigFileItem { FilePath = path, ConfigName = name };
+                displayItems.Add(item);
+                if (path == currentConfig) currentItem = item;
+            }
+
+            displayItems.Add(new ConfigFileItem
+            {
+                ConfigName = "Êñ∞Âª∫ÈÖçÁΩÆÊñá‰ª∂...",
+                IsActionItem = true,
+                ActionType = "New",
+                Icon = Wpf.Ui.Controls.SymbolRegular.Add12
+            });
+
+            displayItems.Add(new ConfigFileItem
+            {
+                ConfigName = "ÊµèËßàÊú¨Âú∞Êñá‰ª∂...",
+                IsActionItem = true,
+                ActionType = "Browse",
+                Icon = Wpf.Ui.Controls.SymbolRegular.Folder24
+            });
+
+            if (cleanedList.Count > 1)
+            {
+                displayItems.Add(new ConfigFileItem
+                {
+                    ConfigName = "ÁßªÈô§ÂΩìÂâçÈÖçÁΩÆ...",
+                    IsActionItem = true,
+                    ActionType = "Remove",
+                    Icon = Wpf.Ui.Controls.SymbolRegular.Delete24
+                });
+            }
+
+            _isUpdatingUI = true;
+            ConfigFileComboBox.ItemsSource = displayItems;
+            ConfigFileComboBox.SelectedItem = currentItem;
+            _isUpdatingUI = false;
+        }
+
+        private async void ConfigFileComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isUpdatingUI) return;
+
+            if (ConfigFileComboBox.SelectedItem is ConfigFileItem selectedItem)
+            {
+                if (selectedItem.IsActionItem)
+                {
+                    await Dispatcher.BeginInvoke(new Action(async () =>
+                    {
+                        _isUpdatingUI = true;
+                        ConfigFileComboBox.SelectedItem = ConfigFileComboBox.Items.OfType<ConfigFileItem>()
+                            .FirstOrDefault(i => !i.IsActionItem && i.FilePath == Properties.Settings.Default.CurrentConfigFile);
+
+                        _isUpdatingUI = false;
+
+                        if (selectedItem.ActionType == "New") await CreateNewConfig();
+                        else if (selectedItem.ActionType == "Browse") await BrowseConfig();
+                        else if (selectedItem.ActionType == "Remove") await RemoveCurrentConfig();
+                    }));
+                    return;
+                }
+
+                if (selectedItem.FilePath != Properties.Settings.Default.CurrentConfigFile)
+                {
+                    ValidateAndApplyConfig(selectedItem.FilePath);
+                    await PromptRestart();
+                }
+            }
+        }
+
+        private async Task CreateNewConfig()
+        {
+            string configNameInput = await PromptForConfigName("ËæìÂÖ•Êñ∞Âª∫ÁöÑÈÖçÁΩÆÊñá‰ª∂Âêç");
+            if (string.IsNullOrWhiteSpace(configNameInput)) return;
+
+            try
+            {
+                string configFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "lanpingcj_configs");
+                if (!Directory.Exists(configFolder)) Directory.CreateDirectory(configFolder);
+
+                string safeName = string.Join("_", configNameInput.Split(Path.GetInvalidFileNameChars()));
+                string newFilePath = Path.Combine(configFolder, $"{safeName}_{DateTime.Now.Ticks}.json");
+
+                string actualFolderPath = folderPath.Replace("\\\\", "\\");
+                if (!Directory.Exists(actualFolderPath)) Directory.CreateDirectory(actualFolderPath);
+
+                string randomTxtName = GenerateRandomFileName(12);
+                string mindanFullPath = Path.Combine(actualFolderPath, randomTxtName);
+                File.WriteAllText(mindanFullPath, "Á§∫‰æãÂßìÂêç#0", Encoding.UTF8);
+
+                string template = $@"{{
+    ""ConfigName"":""{configNameInput.Replace("\"", "\\\"")}"",
+    ""mindan_path"":""{randomTxtName}"",
+    ""Repeat"":true,
+    ""Sound"":true,
+    ""TTS"":true,
+    ""Probability_balance"":true,
+    ""Lock"":false,
+    ""Lock_Password"":"""",
+    ""Use_StudentsID"":false,
+    ""Min_StudentsID"":1,
+    ""Max_StudentsID"":40,
+    ""Tittle"":""Âπ∏ËøêÂÑø""
+}}";
+
+                File.WriteAllText(newFilePath, template, Encoding.UTF8);
+                ValidateAndApplyConfig(newFilePath);
+                await PromptRestart();
+            }
+            catch (Exception ex)
+            {
+                new WarningMeassageBox { errorNewContent = $"Êñ∞Âª∫Â§±Ë¥•Ôºö\n{ex.Message}" }.ShowDialog();
+            }
+        }
+
+        private async Task BrowseConfig()
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "ÈÖçÁΩÆÊñá‰ª∂ (*.json)|*.json",
+                Title = "ÈÄâÊã©ÈÖçÁΩÆÊñá‰ª∂"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                string selectedPath = openFileDialog.FileName;
+                if (selectedPath.EndsWith(".deps.json") || selectedPath.EndsWith(".runtimeconfig.json")) return;
+
+                if (!IsValidProgramJson(selectedPath))
+                {
+                    new WarningMeassageBox { errorNewContent = "Ëøô‰∏çÊòØ‰∏Ä‰∏™ÊúâÊïàÁöÑÊäΩÂ•ñÈÖçÁΩÆÊñá‰ª∂ÔºÅ" }.ShowDialog();
+                    return;
+                }
+
+                string configNameInput = await PromptForConfigName("‰∏∫ÂØºÂÖ•ÁöÑÈÖçÁΩÆÊñá‰ª∂ÂëΩÂêç");
+                if (string.IsNullOrWhiteSpace(configNameInput)) return;
+
+                try
+                {
+                    string jsonString = File.ReadAllText(selectedPath, Encoding.UTF8);
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, WriteIndented = true };
+                    Config config = JsonSerializer.Deserialize<Config>(jsonString, options) ?? new Config();
+
+                    config.ConfigName = configNameInput.Trim();
+                    File.WriteAllText(selectedPath, JsonSerializer.Serialize(config, options), Encoding.UTF8);
+                }
+                catch { }
+
+                ValidateAndApplyConfig(selectedPath);
+                await PromptRestart();
+            }
+        }
+
+        private async Task RemoveCurrentConfig()
+        {
+            var host = GetDialogHost();
+            if (host == null) return;
+
+            var dialog = new ContentDialog(host)
+            {
+                Title = "ÁßªÈô§ÈÖçÁΩÆÊñá‰ª∂",
+                Content = "Á°ÆÂÆöË¶Å‰ªéÂàóË°®‰∏≠ÁßªÈô§ÂΩìÂâçÁöÑÈÖçÁΩÆÊñá‰ª∂ÂêóÔºüÔºàÊñá‰ª∂Êú¨‰Ωì‰∏ç‰ºöË¢´Âà†Èô§Ôºâ",
+                PrimaryButtonText = "ÁßªÈô§",
+                CloseButtonText = "ÂèñÊ∂à"
+            };
+
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                string current = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
+                var history = Properties.Settings.Default.ConfigHistory;
+
+                if (history != null && history.Contains(current))
+                {
+                    history.Remove(current);
+                }
+
+                string fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Properties.Settings.Default.defaultConfig ?? "config.json");
+                if (history != null && history.Count > 0)
+                {
+                    fallback = history[0] ?? fallback;
+                }
+
+                Properties.Settings.Default.CurrentConfigFile = fallback;
+                Properties.Settings.Default.Save();
+
+                ValidateAndApplyConfig(fallback);
+                await PromptRestart();
+            }
+        }
+
+        private async Task<string> PromptForConfigName(string placeholder)
+        {
+            string configNameInput = string.Empty;
+            bool nameProvided = false;
+            string currentPlaceholder = placeholder;
+
+            var host = GetDialogHost();
+            if (host == null) return string.Empty;
+
+            while (!nameProvided)
+            {
+                var textBox = new Wpf.Ui.Controls.TextBox { PlaceholderText = currentPlaceholder, Text = configNameInput };
+                var dialog = new ContentDialog(host)
+                {
+                    Title = "ÂëΩÂêçÈÖçÁΩÆÊñá‰ª∂",
+                    Content = textBox,
+                    PrimaryButtonText = "Á°ÆÂÆö",
+                    CloseButtonText = "ÂèñÊ∂à"
+                };
+
+                var result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.Primary)
+                {
+                    configNameInput = textBox.Text;
+                    if (!string.IsNullOrWhiteSpace(configNameInput))
+                    {
+                        nameProvided = true;
+                    }
+                    else
+                    {
+                        currentPlaceholder = "ÂêçÁß∞‰∏çËÉΩ‰∏∫Á©∫ÔºåËØ∑ÈáçÊñ∞ËæìÂÖ•ÔºÅ";
+                    }
+                }
+                else
+                {
+                    return string.Empty;
+                }
+            }
+            return configNameInput;
+        }
+
+        private void ValidateAndApplyConfig(string filePath)
         {
             try
             {
-                // ¥”◊‘∂®“Â…Ë÷√¿‡º”‘ÿ
-                bool soundEnabled = Properties.Settings.Default.SoundEnabled;
-                SoundToggleSwitch.IsChecked = soundEnabled;
+                string jsonString = File.ReadAllText(filePath, Encoding.UTF8);
+                Config? config = JsonSerializer.Deserialize<Config>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (config == null) throw new Exception("Êñá‰ª∂Ê†ºÂºè‰∏çÊ≠£Á°Æ„ÄÇ");
+
+                Properties.Settings.Default.CurrentConfigFile = filePath;
+
+                if (Properties.Settings.Default.ConfigHistory == null)
+                    Properties.Settings.Default.ConfigHistory = new StringCollection();
+
+                if (!Properties.Settings.Default.ConfigHistory.Contains(filePath))
+                    Properties.Settings.Default.ConfigHistory.Add(filePath);
+
+                Properties.Settings.Default.Save();
+
+                _isUpdatingUI = true;
+                SoundToggleSwitch.IsChecked = config.Sound;
+                TTSToggleSwitch.IsChecked = config.TTS;
+                DuplicateToggleSwitch.IsChecked = !config.Repeat;
+                ProbabilityToggleSwitch.IsChecked = config.Probability_balance;
+                _isUpdatingUI = false;
+
+                LoadConfigHistory();
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                // »Áπ˚º”‘ÿ ß∞‹£¨ π”√ƒ¨»œ÷µ
-                SoundToggleSwitch.IsChecked = false;
-                System.Diagnostics.Debug.WriteLine($"º”‘ÿ…˘“Ù…Ë÷√ ß∞‹: {ex.Message}");
+                WarningMeassageBox warningBox = new WarningMeassageBox { errorNewContent = $"Âä†ËΩΩÂ§±Ë¥•ÔºÅ\n{ex.Message}" };
+                warningBox.ShowDialog();
+                LoadConfigHistory();
             }
         }
 
-        private void LoadTTSSetting()
+        private void UpdateJsonConfig(Action<Config> updateAction)
         {
             try
             {
-                // ¥”◊‘∂®“Â…Ë÷√¿‡º”‘ÿ
-                bool ttsOpen = Properties.Settings.Default.tts;
-                TTSToggleSwitch.IsChecked = ttsOpen;
+                string currentConfig = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
+                if (string.IsNullOrEmpty(currentConfig) || !File.Exists(currentConfig)) return;
+
+                string jsonString = File.ReadAllText(currentConfig, Encoding.UTF8);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, WriteIndented = true };
+                Config? config = JsonSerializer.Deserialize<Config>(jsonString, options);
+
+                if (config != null)
+                {
+                    updateAction(config);
+                    File.WriteAllText(currentConfig, JsonSerializer.Serialize(config, options), Encoding.UTF8);
+                }
             }
-            catch (System.Exception ex)
-            {
-                // »Áπ˚º”‘ÿ ß∞‹£¨ π”√ƒ¨»œ÷µ
-                TTSToggleSwitch.IsChecked = false;
-                System.Diagnostics.Debug.WriteLine($"º”‘ÿTTS…Ë÷√ ß∞‹: {ex.Message}");
-            }
+            catch { }
         }
 
-        //º”‘ÿµ„√˚≤ª÷ÿ∏¥…Ë÷√
-        private void LoadDuplicateSetting()
+        public static void WriteManifest(bool Gettop)
         {
-            try
-            {
-                // ¥”◊‘∂®“Â…Ë÷√¿‡º”‘ÿ
-                bool duplicateEnabled = Properties.Settings.Default.Duplicate;
-                DuplicateToggleSwitch.IsChecked = duplicateEnabled;
-            }
-            catch (System.Exception ex)
-            {
-                // »Áπ˚º”‘ÿ ß∞‹£¨ π”√ƒ¨»œ÷µ
-                DuplicateToggleSwitch.IsChecked = false;
-                System.Diagnostics.Debug.WriteLine($"º”‘ÿµ„√˚≤ª÷ÿ∏¥…Ë÷√ ß∞‹: {ex.Message}");
-            }
-        }
+            var module = Process.GetCurrentProcess().MainModule;
+            if (module == null) return;
 
-        private void LoadgailvSetting()
-        {
-            try
-            {
-                // ¥”◊‘∂®“Â…Ë÷√¿‡º”‘ÿ
-                bool gailvEnabled = Properties.Settings.Default.gailv1;
-                ProbabilityToggleSwitch.IsChecked = gailvEnabled;
-            }
-            catch (System.Exception ex)
-            {
-                // »Áπ˚º”‘ÿ ß∞‹£¨ π”√ƒ¨»œ÷µ
-                ProbabilityToggleSwitch.IsChecked = false;
-                System.Diagnostics.Debug.WriteLine($"º”‘ÿ∏≈¬ …Ë÷√ ß∞‹: {ex.Message}");
-            }
-        }
+            string exePath = module.FileName;
+            string manifestPath = exePath + ".manifest";
+            string uiAccessValue = Gettop ? "true" : "false";
 
-public static void WriteManifest(bool Gettop)
-    {
-        string exePath = Process.GetCurrentProcess().MainModule.FileName;
-        string manifestPath = exePath + ".manifest"; // …˙≥… MyApp.exe.manifest
-
-        string uiAccessValue = Gettop ? "true" : "false";
-
-        string xmlContent = $@"<?xml version=""1.0"" encoding=""utf-8""?>
+            string xmlContent = $@"<?xml version=""1.0"" encoding=""utf-8""?>
 <assembly manifestVersion=""1.0"" xmlns=""urn:schemas-microsoft-com:asm.v1"">
   <assemblyIdentity version=""1.0.0.0"" name=""MyApplication.app""/>
   <trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
@@ -215,46 +550,28 @@ public static void WriteManifest(bool Gettop)
   </trustInfo>
 </assembly>";
 
-        try
-        {
-            File.WriteAllText(manifestPath, xmlContent);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Œƒº˛–¥»Î ß∞‹: " + ex.Message);
-        }
-    }
-       
-    private void LoadTopmostSetting()
-        {
             try
             {
-                // ¥”◊‘∂®“Â…Ë÷√¿‡º”‘ÿ
-                bool TopmostEnabled = Properties.Settings.Default.Top;
-                TopmostToggleSwitch.IsChecked = TopmostEnabled;
+                File.WriteAllText(manifestPath, xmlContent);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                // »Áπ˚º”‘ÿ ß∞‹£¨ π”√ƒ¨»œ÷µ
-                TopmostToggleSwitch.IsChecked = false;
-                System.Diagnostics.Debug.WriteLine($"º”‘ÿ÷√∂•…Ë÷√ ß∞‹: {ex.Message}");
+                Debug.WriteLine(ex.Message);
             }
         }
-        private async void TopmostToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
+
+        private void TopmostToggleSwitch_Checked(object sender, RoutedEventArgs e)
         {
             SaveTopSetting(true);
             WriteManifest(true);
-
-            
         }
 
-        private async void TopmostToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
+        private void TopmostToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
         {
             SaveTopSetting(false);
             WriteManifest(false);
-
-           
         }
+
         private async void SaveTopSetting(bool isEnabled)
         {
             if (IsLoaded)
@@ -263,65 +580,69 @@ public static void WriteManifest(bool Gettop)
                 {
                     Properties.Settings.Default.Top = isEnabled;
                     Properties.Settings.Default.Save();
-                    var moreInfoWindow = System.Windows.Application.Current.Windows.OfType<MoreInfo>().FirstOrDefault();
+                    var moreInfoWindow = Application.Current.Windows.OfType<MoreInfo>().FirstOrDefault();
                     if (moreInfoWindow != null)
                     {
                         await moreInfoWindow.TopDialog();
                     }
                     else
                     {
-                        // »Áπ˚√ª”–¥Úø™µƒMoreInfo¥∞ø⁄£¨‘Ú¥¥Ω®“ª∏ˆ–¬µƒ
                         MoreInfo more = new MoreInfo();
                         await more.TopDialog();
                     }
                 }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"±£¥Ê÷√∂•…Ë÷√ ß∞‹: {ex.Message}");
-                }
-            }
-
-        }
-        private void SoundToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
-        {
-            SaveSoundSetting(true);
-        }
-
-        private void SoundToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
-        {
-            SaveSoundSetting(false);
-        }
-
-        private void SaveSoundSetting(bool isEnabled)
-        {
-            if (IsLoaded)
-            {
-                try
-                {
-                    // ±£¥ÊµΩ◊‘∂®“Â…Ë÷√
-                    Properties.Settings.Default.SoundEnabled = isEnabled;
-                    Properties.Settings.Default.Save();
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"±£¥Ê…˘“Ù…Ë÷√ ß∞‹: {ex.Message}");
-                }
+                catch { }
             }
         }
 
-        private void ProbabilityToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
+        private void SoundToggleSwitch_Checked(object sender, RoutedEventArgs e)
         {
-            SaveGailvSetting(true);
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Sound = true);
         }
+
+        private void SoundToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Sound = false);
+        }
+
+        private void TTSToggleSwitch_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.TTS = true);
+        }
+
+        private void TTSToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.TTS = false);
+        }
+
+        private void DuplicateToggleSwitch_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Repeat = false);
+        }
+
+        private void DuplicateToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Repeat = true);
+        }
+
+        private void ProbabilityToggleSwitch_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Probability_balance = true);
+        }
+
+        private void ProbabilityToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Probability_balance = false);
+        }
+
         private void Reset_Probability(object sender, EventArgs e)
         {
-            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-
+            string MindanPath = Path.Combine(documentsPath, "mindan");
             string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
 
             foreach (string file in files)
             {
-                string filePath = System.IO.Path.Combine(MindanPath, file);
+                string filePath = Path.Combine(MindanPath, file);
                 if (File.Exists(filePath))
                 {
                     try
@@ -360,131 +681,50 @@ public static void WriteManifest(bool Gettop)
                     }
                     catch (Exception ex)
                     {
-                        MessageBox w3 = new MessageBox();
-                        w3.NewTittle = "¥ÌŒÛ";
-                        w3.NewContent = $"¥¶¿ÌŒƒº˛ {file}  ±≥ˆ¥Ì: {ex.Message}";
+                        MessageBox w3 = new MessageBox { NewTittle = "ÈîôËØØ", NewContent = $"Â§ÑÁêÜÊñá‰ª∂ {file} Êó∂Âá∫Èîô: {ex.Message}" };
                         w3.ShowDialog();
                         return;
                     }
                 }
             }
 
-            // œ‘ æΩ·π˚
-            MessageBox resultWindow = new MessageBox();
-            resultWindow.NewTittle = "Ã· æ";
-
-           
-                resultWindow.NewContent = "∏≈¬ ∆Ω∫‚“—÷ÿ÷√";
-            
-            
-
+            MessageBox resultWindow = new MessageBox { NewTittle = "ÊèêÁ§∫", NewContent = "Ê¶ÇÁéáÂπ≥Ë°°Â∑≤ÈáçÁΩÆ" };
             resultWindow.ShowDialog();
-
-            
-            
         }
 
-        private void ProbabilityToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
+        private void Restart(object sender, RoutedEventArgs e)
         {
-            SaveGailvSetting(false);
-        }
-
-        private void SaveGailvSetting(bool isEnabled)
-        {
-            if (IsLoaded)
-            {
-                try
-                {
-                    // ±£¥ÊµΩ◊‘∂®“Â…Ë÷√
-                    Properties.Settings.Default.gailv1 = isEnabled;
-                    Properties.Settings.Default.Save();
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"±£¥Ê∏≈¬ …Ë÷√ ß∞‹: {ex.Message}");
-                }
-            }
-        }
-
-        // TTSø™πÿ◊¥Ã¨∏ƒ±‰ ¬º˛
-        private void TTSToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
-        {
-            SaveTTSSetting(true);
-        }
-
-        private void TTSToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
-        {
-            SaveTTSSetting(false);
-        }
-
-        private void SaveTTSSetting(bool isEnabled)
-        {
-            if (IsLoaded)
-            {
-                try
-                {
-                    // ±£¥ÊµΩ◊‘∂®“Â…Ë÷√
-                    Properties.Settings.Default.tts = isEnabled;
-                    Properties.Settings.Default.Save();
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"±£¥ÊTTS…Ë÷√ ß∞‹: {ex.Message}");
-                }
-            }
-        }
-
-        // µ„√˚≤ª÷ÿ∏¥ø™πÿ◊¥Ã¨∏ƒ±‰ ¬º˛
-        private void DuplicateToggleSwitch_Checked(object sender, System.Windows.RoutedEventArgs e)
-        {
-            SaveDuplicateSetting(true);
-        }
-
-        private void DuplicateToggleSwitch_Unchecked(object sender, System.Windows.RoutedEventArgs e)
-        {
-            SaveDuplicateSetting(false);
-        }
-
-        private void SaveDuplicateSetting(bool isEnabled)
-        {
-            if (IsLoaded)
-            {
-                try
-                {
-                    // ±£¥ÊµΩ◊‘∂®“Â…Ë÷√
-                    Properties.Settings.Default.Duplicate = isEnabled;
-                    Properties.Settings.Default.Save();
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"±£¥Êµ„√˚≤ª÷ÿ∏¥…Ë÷√ ß∞‹: {ex.Message}");
-                }
-            }
-        }
-
-        // ÷ÿ÷√µ„√˚≤ª÷ÿ∏¥
-        private void Restart(object sender, System.Windows.RoutedEventArgs e)
-        {
-            string MindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-            string AlreadyPath = System.IO.Path.Combine(MindanPath, "Already.txt");
+            string MindanPath = Path.Combine(documentsPath, "mindan");
+            string AlreadyPath = Path.Combine(MindanPath, "Already.txt");
 
             try
             {
-                File.Delete(AlreadyPath);
-                File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
+                MainWindow mainWindow = new MainWindow();
+                mainWindow.ResetData();
 
-                Properties.Settings.Default.IsMain = false;
-                Properties.Settings.Default.Save();
-
-                MessageBox w3 = new MessageBox();
-                w3.NewTittle = "Ã· æ";
-                w3.NewContent = "“—æ≠÷ÿ÷√µ„√˚≤ª÷ÿ∏¥£°";
+                MessageBox w3 = new MessageBox { NewTittle = "ÊèêÁ§∫", NewContent = "Â∑≤ÁªèÈáçÁΩÆÁÇπÂêç‰∏çÈáçÂ§çÔºÅ" };
                 w3.ShowDialog();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"÷ÿ÷√µ„√˚≤ª÷ÿ∏¥ ß∞‹: {ex.Message}");
+                Debug.WriteLine(ex.Message);
             }
         }
+    }
+
+    public class Config
+    {
+        public string? ConfigName { get; set; } = string.Empty;
+        public string? mindan_path { get; set; } = string.Empty;
+        public bool Repeat { get; set; } = true;
+        public bool Sound { get; set; } = true;
+        public bool TTS { get; set; } = true;
+        public bool Probability_balance { get; set; } = true;
+        public bool Lock { get; set; } = false;
+        public string? Lock_Password { get; set; } = string.Empty;
+        public bool Use_StudentsID { get; set; } = false;
+        public int Min_StudentsID { get; set; } = 1;
+        public int Max_StudentsID { get; set; } = 40;
+        public string? Tittle { get; set; } = "Âπ∏ËøêÂÑø";
     }
 }

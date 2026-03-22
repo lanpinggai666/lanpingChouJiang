@@ -1,182 +1,159 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Windows;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Controls;
 
 namespace lanpingcj
 {
-    /// <summary>
-    /// Window1.xaml 的交互逻辑
-    /// </summary>
     public partial class ChoseMoreMan : FluentWindow
     {
-        public string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        private string _fullTxtPath = string.Empty;
+
         public ChoseMoreMan()
         {
             InitializeComponent();
-
-            
-            string mindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-
-            // 确保目录存在
-            if (!Directory.Exists(mindanPath))
-            {
-                Directory.CreateDirectory(mindanPath);
-            }
-
-            string path = System.IO.Path.Combine(mindanPath, "mindan.txt");
-
-            // 如果名单文件不存在，创建空文件（后续操作会打开编辑器）
-            if (!File.Exists(path))
-            {
-                File.WriteAllText(path, "", Encoding.UTF8);
-            }
+            InitializeMindanPath();
 
             int lineCount = 0;
-            using (StreamReader sr = new StreamReader(path, Encoding.UTF8))
+            if (!string.IsNullOrEmpty(_fullTxtPath) && File.Exists(_fullTxtPath))
             {
-                while (sr.ReadLine() != null)
-                {
-                    lineCount++;
-                }
+                var lines = File.ReadAllLines(_fullTxtPath, Encoding.UTF8)
+                                .Where(s => !string.IsNullOrWhiteSpace(s))
+                                .ToList();
+                lineCount = lines.Count;
             }
 
-            // 如果 lineCount 为 0，Enumerable.Range(1,0) 会产生空序列，ComboBox 不会出错
             NumberComboBox.ItemsSource = Enumerable.Range(1, lineCount).ToList();
         }
 
+        private void InitializeMindanPath()
+        {
+            try
+            {
+                string configPath = Properties.Settings.Default.CurrentConfigFile;
+                if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath)) return;
+
+                string jsonString = File.ReadAllText(configPath, Encoding.UTF8);
+                using var doc = JsonDocument.Parse(jsonString);
+
+                if (doc.RootElement.TryGetProperty("mindan_path", out JsonElement pathElement))
+                {
+                    string? txtPathValue = pathElement.GetString();
+                    if (string.IsNullOrEmpty(txtPathValue)) return;
+
+                    if (Path.IsPathRooted(txtPathValue))
+                    {
+                        _fullTxtPath = txtPathValue;
+                    }
+                    else
+                    {
+                        string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "lanpingcj_mindan");
+                        _fullTxtPath = Path.Combine(folderPath, txtPathValue);
+                    }
+                }
+            }
+            catch
+            {
+                _fullTxtPath = string.Empty;
+            }
+        }
+
         void OK(object sender, RoutedEventArgs e)
-{
-    string mindanPath = System.IO.Path.Combine(documentsPath, "mindan");
-    string path = System.IO.Path.Combine(mindanPath, "mindan.txt");
-    string CountPath = System.IO.Path.Combine(mindanPath, "Count.txt");
-    string AlreadyPath = System.IO.Path.Combine(mindanPath, "Already.txt");
+        {
+            if (string.IsNullOrEmpty(_fullTxtPath))
+            {
+                System.Windows.MessageBox.Show("未找到有效的名单配置文件，请先在设置中配置！", "错误", System.Windows.MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
-    // 确保目录和文件存在
-    if (!Directory.Exists(mindanPath))
-    {
-        Directory.CreateDirectory(mindanPath);
-    }
-    if (!File.Exists(path))
-    {
-        File.WriteAllText(path, "", Encoding.UTF8);
-        System.Windows.MessageBox.Show("检测到没有名单文件。已经自动创建文件。请在新创建的mindan.txt文件里输入名单，一行一个，不要有空格！",
-            "文件不存在",
-         System.Windows.MessageBoxButton.OK,
-            MessageBoxImage.Information);
+            string mindanDir = Path.GetDirectoryName(_fullTxtPath) ?? string.Empty;
+            string alreadyPath = Path.Combine(mindanDir, "Already.txt");
 
-        Process process = new Process();
-        process.StartInfo.FileName = "notepad.exe";
-        process.StartInfo.Arguments = $"\"{path}\"";
-        process.Start();
-        return;
-    }
+            if (!File.Exists(_fullTxtPath))
+            {
+                System.Windows.MessageBox.Show("名单文件不存在！", "错误", System.Windows.MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
-    if (!File.Exists(AlreadyPath))
-    {
-        // 使用 "test" 占位以维持与原逻辑兼容
-        ;
-    }
+            if (!File.Exists(alreadyPath))
+            {
+                File.WriteAllText(alreadyPath, "", Encoding.UTF8);
+            }
 
-    // 读取所有有效姓名（去掉空行并 Trim，同时去除 # 及其后面的内容）
-    var allLines = File.ReadAllLines(path, Encoding.UTF8)
-                       .Select(s => s?.Trim())
-                       .Where(s => !string.IsNullOrWhiteSpace(s))
-                       .Select(s => 
-                       {
-                           // 如果姓名包含 #，则截取 # 之前的部分
-                           int hashIndex = s?.IndexOf('#') ?? -1;
-                           return hashIndex > 0 ? s.Substring(0, hashIndex).Trim() : s;
-                       })
-                       .ToList();
+            List<string> allLines = File.ReadAllLines(_fullTxtPath, Encoding.UTF8)
+                               .Select(s => s ?? string.Empty)
+                               .Select(s => s.Trim())
+                               .Where(s => !string.IsNullOrWhiteSpace(s))
+                               .Select(s =>
+                               {
+                                   int hashIndex = s.IndexOf('#');
+                                   return hashIndex >= 0 ? s.Substring(0, hashIndex).Trim() : s;
+                               })
+                               .ToList();
 
-    int studentsCount = allLines.Count;
+            if (allLines.Count == 0)
+            {
+                System.Windows.MessageBox.Show("名单文件是空的！", "提示", System.Windows.MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
+            if (NumberComboBox.SelectedItem == null)
+            {
+                System.Windows.MessageBox.Show("请选择抽取数量。", "提示", System.Windows.MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
 
+            int selectedValue = (int)NumberComboBox.SelectedItem;
 
-    if (studentsCount == 0)
-    {
-        System.Windows.MessageBox.Show("名单文件是空的，请添加姓名后重新运行程序！",
-            "空文件",
-            System.Windows.MessageBoxButton.OK,
-            MessageBoxImage.Warning);
+            HashSet<string> alreadyLines = File.ReadAllLines(alreadyPath, Encoding.UTF8)
+                                   .Select(s => s ?? string.Empty)
+                                   .Select(s => s.Trim())
+                                   .Where(s => !string.IsNullOrWhiteSpace(s))
+                                   .ToHashSet(StringComparer.Ordinal);
 
-        Process process = new Process();
-        process.StartInfo.FileName = "notepad.exe";
-        process.StartInfo.Arguments = $"\"{path}\"";
-        process.Start();
-        return;
-    }
-
-    if (NumberComboBox.SelectedItem == null)
-    {
-        System.Windows.MessageBox.Show("请先选择抽取数量。", "提示", System.Windows.MessageBoxButton.OK, MessageBoxImage.Information);
-        return;
-    }
-
-    int selectedValue = (int)NumberComboBox.SelectedItem;
-
-    var alreadyLines = File.ReadAllLines(AlreadyPath, Encoding.UTF8)
-                           .Select(s => s?.Trim())
-                           .Where(s => !string.IsNullOrWhiteSpace(s))
-                           .Select(s => 
-                           {
-                               // 如果姓名包含 #，则截取 # 之前的部分
-                               int hashIndex = s?.IndexOf('#') ?? -1;
-                               return hashIndex > 0 ? s.Substring(0, hashIndex).Trim() : s;
-                           })
-                           .ToHashSet(StringComparer.Ordinal);
-
-    var available = allLines.Where(n => !alreadyLines.Contains(n)).ToList();
-
-    bool wasReset = false;
-    if (available.Count < selectedValue)
-    {
-        File.WriteAllText(AlreadyPath, "test", Encoding.UTF8);
-        alreadyLines.Clear();
-        available = new List<string>(allLines);
-        wasReset = true;
-    }
-
-    // 防止请求数量超过名单总数
-    if (selectedValue > allLines.Count)
-    {
-        selectedValue = allLines.Count;
-    }
-
-    // 使用 Fisher–Yates 洗牌选择不重复的姓名（更高效且无重复）
-    var rng = new Random();
-    for (int i = available.Count - 1; i > 0; i--)
-    {
-        int j = rng.Next(i + 1);
-        var tmp = available[i];
-        available[i] = available[j];
-        available[j] = tmp;
-    }
-
-    var picked = available.Take(selectedValue).ToList();
-
-    
-
-    // 拼接显示结果
-    string IsRestested = wasReset ? "已重置点名不重复\n" : string.Empty;
-    string joined = string.Join(", ", picked);
-
-    
-    Properties.Settings.Default.IsMain = false;
-    Properties.Settings.Default.Save();
-    MessageBox MB = new MessageBox();
-    MB.NewTittle = "抽奖结果";
-    MB.NewContent = $"幸运儿是：{joined}";
-    MB.New_extra_text = $"";
-    
-    MB.ShowDialog();
+            List<string> available = allLines.Where(n => !alreadyLines.Contains(n)).ToList();
 
 
-    this.Close();
-}
+            if (available.Count < selectedValue)
+            {
+                File.WriteAllText(alreadyPath, "", Encoding.UTF8);
+                available = new List<string>(allLines);
+
+            }
+
+            Random rng = new Random();
+            for (int i = available.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                string tmp = available[i];
+                available[i] = available[j];
+                available[j] = tmp;
+            }
+
+            List<string> picked = available.Take(selectedValue).ToList();
+
+            // 记录已抽中的人
+            File.AppendAllLines(alreadyPath, picked, Encoding.UTF8);
+
+            string joined = string.Join(", ", picked);
+
+            Properties.Settings.Default.IsMain = false;
+            Properties.Settings.Default.Save();
+
+            MessageBox MB = new MessageBox();
+            MB.NewTittle = "抽奖结果";
+            MB.NewContent = $"幸运儿是：{joined}";
+            MB.New_extra_text = string.Empty;
+
+            MB.ShowDialog();
+            this.Close();
+        }
 
         void Cancel(object sender, RoutedEventArgs e)
         {

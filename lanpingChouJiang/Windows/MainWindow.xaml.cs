@@ -167,7 +167,7 @@ namespace lanpingcj
 
         public async Task<(string Version, string Mandatory)> GetVersion()
         {
-            string url = "https://raw.githubusercontent.com/lanpinggai666/lanpingChouJiang/master/version";
+            string url = "https://update.choujiang.lanpinggai.top/version";
             using HttpClient client = new HttpClient();
             client.Timeout = TimeSpan.FromSeconds(30);
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");

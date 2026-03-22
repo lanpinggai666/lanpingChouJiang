@@ -88,7 +88,7 @@ namespace lanpingcj.Views.Pages
 
         public async Task DownloadUpdate()
         {
-            string downloadUrl = "https://lanpinggai66-my.sharepoint.com/personal/lanpinggai666_lanpinggai66_onmicrosoft_com/_layouts/52/download.aspx?share=IQDkSqcZUZCtQJOHJJN8yNrpAV2HSnKjGXBBRqOOkY2D4IQ";
+            string downloadUrl = "https://update.choujiang.lanpinggai.top/latest.exe";
 
             if (isDownloading) return;
 

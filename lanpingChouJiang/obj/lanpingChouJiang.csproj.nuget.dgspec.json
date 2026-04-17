@@ -1,20 +1,24 @@
 {
   "format": 1,
   "restore": {
-    "F:\\项目\\lanpingChouJiang\\lanpingChouJiang\\lanpingChouJiang.csproj": {}
+    "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\lanpingChouJiang.csproj": {}
   },
   "projects": {
-    "F:\\项目\\lanpingChouJiang\\lanpingChouJiang\\lanpingChouJiang.csproj": {
+    "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\lanpingChouJiang.csproj": {
       "version": "2.1.1",
       "restore": {
-        "projectUniqueName": "F:\\项目\\lanpingChouJiang\\lanpingChouJiang\\lanpingChouJiang.csproj",
+        "projectUniqueName": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\lanpingChouJiang.csproj",
         "projectName": "lanpingcj",
-        "projectPath": "F:\\项目\\lanpingChouJiang\\lanpingChouJiang\\lanpingChouJiang.csproj",
-        "packagesPath": "C:\\Users\\lanpinggai666\\.nuget\\packages\\",
-        "outputPath": "F:\\项目\\lanpingChouJiang\\lanpingChouJiang\\obj\\",
+        "projectPath": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\lanpingChouJiang.csproj",
+        "packagesPath": "C:\\Users\\Amdox\\.nuget\\packages\\",
+        "outputPath": "E:\\杂物\\项目\\WpfApp2 -WPF UI -github\\lanpingChouJiang\\obj\\",
         "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "d:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
         "configFilePaths": [
-          "C:\\Users\\lanpinggai666\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Amdox\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -95,7 +99,7 @@
               "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.202/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

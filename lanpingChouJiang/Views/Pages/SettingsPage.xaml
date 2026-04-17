@@ -14,6 +14,12 @@
     <Grid>
         <ScrollViewer>
             <StackPanel Margin="24">
+                
+                <ui:TextBlock
+                    Margin="0,0,0,16"
+                    FontSize="20"
+                    FontWeight="SemiBold"
+                    Text="设置" />
                 <ui:CardControl Margin="0,0,0,12" Icon="{ui:SymbolIcon Document20}">
                     <ui:CardControl.Header>
                         <Grid>
@@ -22,28 +28,28 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <ui:TextBlock
-                                Grid.Row="0"
-                                FontTypography="Body"
-                                Text="配置文件" />
+                Grid.Row="0"
+                FontTypography="Body"
+                Text="配置文件" />
                             <ui:TextBlock
-                                Grid.Row="1"
-                                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
-                                Text="选择或浏览本地的 JSON 名单配置文件" />
+                Grid.Row="1"
+                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                Text="选择或浏览本地的配置文件" />
                         </Grid>
                     </ui:CardControl.Header>
                     <StackPanel Orientation="Horizontal">
                         <ComboBox
-                            x:Name="ConfigFileComboBox"
-                            Width="250"
-                            Margin="0,0,10,0"
-                            SelectionChanged="ConfigFileComboBox_SelectionChanged">
+            x:Name="ConfigFileComboBox"
+            Width="250"
+            Margin="0,0,10,0"
+            SelectionChanged="ConfigFileComboBox_SelectionChanged">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
                                         <ui:SymbolIcon
-                                            Margin="0,0,8,0"
-                                            FontSize="14"
-                                            Symbol="{Binding Icon}" />
+                            Margin="0,0,8,0"
+                            FontSize="14"
+                            Symbol="{Binding Icon}" />
                                         <TextBlock VerticalAlignment="Center" Text="{Binding DisplayText}" />
                                     </StackPanel>
                                 </DataTemplate>
@@ -51,12 +57,6 @@
                         </ComboBox>
                     </StackPanel>
                 </ui:CardControl>
-                <ui:TextBlock
-                    Margin="0,0,0,16"
-                    FontSize="20"
-                    FontWeight="SemiBold"
-                    Text="设置" />
-
                 <ui:TextBlock
                     Margin="0,0,0,8"
                     FontTypography="BodyStrong"

@@ -313,7 +313,7 @@ namespace lanpingcj.Views.Pages
 
         private async Task CreateNewConfig()
         {
-            string configNameInput = await PromptForConfigName("输入新建的配置文件名");
+            string configNameInput = await PromptForConfigName("输入新建的配置文件名                                         ");
             if (string.IsNullOrWhiteSpace(configNameInput)) return;
 
             try
@@ -402,7 +402,7 @@ namespace lanpingcj.Views.Pages
             var dialog = new ContentDialog(host)
             {
                 Title = "移除配置文件",
-                Content = "确定要从列表中移除当前的配置文件吗？（文件本体不会被删除）",
+                Content = "确定要从列表中移除当前的配置文件吗？                             ",
                 PrimaryButtonText = "移除",
                 CloseButtonText = "取消"
             };
@@ -445,7 +445,7 @@ namespace lanpingcj.Views.Pages
                 var textBox = new Wpf.Ui.Controls.TextBox { PlaceholderText = currentPlaceholder, Text = configNameInput };
                 var dialog = new ContentDialog(host)
                 {
-                    Title = "命名配置文件",
+                    Title = "命名配置文件                           ",
                     Content = textBox,
                     PrimaryButtonText = "确定",
                     CloseButtonText = "取消"

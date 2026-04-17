@@ -1,5 +1,8 @@
-﻿using Microsoft.Toolkit.Uwp.Notifications;
+﻿using lanpingcj.Views.Pages;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,20 +12,19 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using System.Collections.Generic;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Wpf.Ui;
 
 namespace lanpingcj
 {
     public partial class MainWindow : Window
     {
+        #region 一些win32API和常量
         private const int HWND_TOPMOST = -1;
         private const uint SWP_NOSIZE = 0x0001;
         private const uint SWP_NOMOVE = 0x0002;
@@ -99,7 +101,7 @@ namespace lanpingcj
             public uint time;
             public IntPtr dwExtraInfo;
         }
-
+        #endregion
         public string ConfigFilePath = Properties.Settings.Default.CurrentConfigFile ?? "config.json";
         public Config config = new Config();
         private List<string> _allNames = new List<string>();
@@ -108,6 +110,79 @@ namespace lanpingcj
         private Random _random = new Random();
         public string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "lanpingcj_mindan").Replace("\\", "\\\\");
 
+        private void EnsureDefaultConfigExistsAndValid()
+        {
+            string configDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory ?? string.Empty, "config");
+            string defaultPath = Path.Combine(configDir, "default.json");
+
+            
+            string defaultContent = @"{
+  ""ConfigName"": ""默认"",
+  ""mindan_path"": ""default.txt"",
+  ""Repeat"": true,
+  ""Sound"": true,
+  ""TTS"": true,
+  ""Probability_balance"": true,
+  ""Lock"": false,
+  ""Lock_Password"": """",
+  ""Use_StudentsID"": false,
+  ""Min_StudentsID"": 1,
+  ""Max_StudentsID"": 40,
+  ""Tittle"": ""幸运儿""
+}";
+
+            bool needsCreationOrReset = false;
+
+            
+            if (!File.Exists(defaultPath))
+            {
+                needsCreationOrReset = true;
+            }
+            else
+            {
+                
+                try
+                {
+                    string content = File.ReadAllText(defaultPath);
+                    var testConfig = JsonSerializer.Deserialize<Config>(content, _jsonOptions);
+                    if (testConfig == null)
+                    {
+                        needsCreationOrReset = true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    
+                    needsCreationOrReset = true;
+                }
+                catch (Exception ex)
+                {
+                    
+                    Debug.WriteLine($"读取默认配置文件时发生错误: {ex.Message}");
+                    needsCreationOrReset = true;
+                }
+            }
+
+            
+            if (needsCreationOrReset)
+            {
+                try
+                {
+                    if (!Directory.Exists(configDir))
+                    {
+                        Directory.CreateDirectory(configDir);
+                    }
+                    File.WriteAllText(defaultPath, defaultContent, Encoding.UTF8);
+
+                    // 顺便确保默认的名单文件也存在
+                    CheckFile(Path.Combine(folderPath, "default.txt"));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"无法创建或重置默认配置文件: {ex.Message}");
+                }
+            }
+        }
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -178,20 +253,7 @@ namespace lanpingcj
             return (version, mandatory);
         }
 
-        public static void EnsurePreferExternalManifest()
-        {
-            const string subKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\SideBySide";
-            try
-            {
-                using RegistryKey key = Registry.LocalMachine.OpenSubKey(subKey, true);
-                if (key != null && key.GetValue("PreferExternalManifest")?.ToString() != "1")
-                {
-                    key.SetValue("PreferExternalManifest", 1, RegistryValueKind.DWord);
-                }
-            }
-            catch { }
-        }
-
+       
         public async Task CheckUpdate()
         {
             var result = await GetVersion();
@@ -247,13 +309,13 @@ namespace lanpingcj
 
         public MainWindow()
         {
-            EnsurePreferExternalManifest();
+            //EnsurePreferExternalManifest();
             if (IsAlreadyRunning())
             {
                 Application.Current?.Shutdown();
                 return;
             }
-
+            EnsureDefaultConfigExistsAndValid();
             this.Closed += (sender, e) =>
             {
                 ReleaseMutex();
@@ -682,15 +744,10 @@ namespace lanpingcj
 
         void Open_mingdan(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(config?.mindan_path))
-            {
-                string mindanPath = Path.Combine(folderPath, config.mindan_path);
-                string? dir = Path.GetDirectoryName(mindanPath);
-                if (dir != null && Directory.Exists(dir))
-                {
-                    Process.Start("explorer.exe", dir);
-                }
-            }
+            MoreInfo moreInfo = new MoreInfo();
+            moreInfo.ShowDialog();
+            moreInfo.ToUpdatePage = true;
+            moreInfo.NavigationView.Navigate(typeof(UpdatePage));
         }
 
         void Open_More_Man(object sender, EventArgs e)

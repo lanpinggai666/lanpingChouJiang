@@ -84,8 +84,10 @@
                         <ui:ToggleSwitch
                             x:Name="SoundToggleSwitch"
                             Margin="0,0,20,0"
+                            Checked="SoundToggleSwitch_Checked"
                             OffContent="关"
-                            OnContent="开" />
+                            OnContent="开"
+                            Unchecked="SoundToggleSwitch_Unchecked" />
                     </StackPanel>
                 </ui:CardControl>
 
@@ -235,6 +237,151 @@
                                     Content="重置" />
                             </Grid>
                         </Grid>
+                    </Grid>
+                </ui:CardExpander>
+
+                <ui:CardExpander
+                    Margin="0,0,0,12"
+                    ContentPadding="0"
+                    Icon="{ui:SymbolIcon NumberSymbol24}">
+                    <ui:CardExpander.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ui:TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                FontTypography="Body"
+                                Text="学号抽取" />
+                            <ui:TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                Text="开启后不再使用名单，而是在学号范围内随机抽取一个号数" />
+
+                            <StackPanel
+                                Grid.Row="0"
+                                Grid.RowSpan="2"
+                                Grid.Column="1"
+                                Orientation="Horizontal">
+                                <ui:ToggleSwitch
+                                    x:Name="StudentIdToggleSwitch"
+                                    Margin="0,0,3,0"
+                                    Checked="StudentIdToggleSwitch_Checked"
+                                    OffContent="关"
+                                    OnContent="开"
+                                    Unchecked="StudentIdToggleSwitch_Unchecked" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:CardExpander.Header>
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            Margin="35,6,0,0"
+                            Text="学号范围" />
+                        <TextBlock
+                            Grid.Column="1"
+                            Margin="0,6,8,0"
+                            Text="从" />
+                        <ui:NumberBox
+                            x:Name="MinIdBox"
+                            Grid.Column="2"
+                            MinWidth="110"
+                            Margin="0,0,8,0"
+                            Minimum="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="1"
+                            ValueChanged="IdRangeBox_ValueChanged" />
+                        <TextBlock
+                            Grid.Column="3"
+                            Margin="0,6,8,0"
+                            Text="到" />
+                        <ui:NumberBox
+                            x:Name="MaxIdBox"
+                            Grid.Column="4"
+                            MinWidth="110"
+                            Minimum="1"
+                            SpinButtonPlacementMode="Inline"
+                            Value="40"
+                            ValueChanged="IdRangeBox_ValueChanged" />
+                    </Grid>
+                </ui:CardExpander>
+
+                <ui:CardExpander
+                    Margin="0,0,0,12"
+                    ContentPadding="0"
+                    Icon="{ui:SymbolIcon LockClosed24}">
+                    <ui:CardExpander.Header>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <ui:TextBlock
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                FontTypography="Body"
+                                Text="锁定设置" />
+                            <ui:TextBlock
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Foreground="{ui:ThemeResource TextFillColorSecondaryBrush}"
+                                Text="开启后，打开本设置窗口需要输入密码（防止学生乱改）" />
+
+                            <StackPanel
+                                Grid.Row="0"
+                                Grid.RowSpan="2"
+                                Grid.Column="1"
+                                Orientation="Horizontal">
+                                <ui:ToggleSwitch
+                                    x:Name="LockToggleSwitch"
+                                    Margin="0,0,3,0"
+                                    Checked="LockToggleSwitch_Checked"
+                                    OffContent="关"
+                                    OnContent="开"
+                                    Unchecked="LockToggleSwitch_Unchecked" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:CardExpander.Header>
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Grid.Column="0"
+                            Margin="35,6,0,0"
+                            Text="设置密码" />
+                        <ui:PasswordBox
+                            x:Name="LockPasswordBox"
+                            Grid.Column="1"
+                            MinWidth="200"
+                            Margin="0,0,8,0"
+                            PlaceholderText="输入密码" />
+                        <ui:Button
+                            Grid.Column="2"
+                            Click="SaveLockPassword_Click"
+                            Content="保存密码" />
                     </Grid>
                 </ui:CardExpander>
 

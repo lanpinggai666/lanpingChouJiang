@@ -1,12 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
+using System;
 using System.IO;
-using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
-using System.Windows.Data;
 using Wpf.Ui.Controls;
 using System.Linq;
 using System.Windows;
@@ -14,13 +9,12 @@ using Microsoft.Win32;
 using System.Text.Json;
 using System.Collections.Specialized;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace lanpingcj.Views.Pages
 {
     public partial class SettingsPage : Page
     {
-        public string documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        public string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "lanpingcj_mindan").Replace("\\", "\\\\");
         private bool _isUpdatingUI = false;
 
         public class ConfigFileItem
@@ -41,6 +35,16 @@ namespace lanpingcj.Views.Pages
             }
 
             public override string ToString() => DisplayText;
+        }
+
+        public SettingsPage()
+        {
+            InitializeComponent();
+
+            ValidateAndApplyConfig(ConfigService.CurrentConfigPath);
+
+            version.Text = Properties.Settings.Default.ThisVersion ?? "1.0.0";
+            version2.Text = $"v{Properties.Settings.Default.ThisVersion ?? "1.0.0"}";
         }
 
         private ContentDialogHost? GetDialogHost()
@@ -74,22 +78,6 @@ namespace lanpingcj.Views.Pages
             return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()) + ".txt";
         }
 
-        public async Task<(string Version, string Mandatory)> GetVersion()
-        {
-            string url = "https://update.choujiang.lanpinggai.top/version";
-
-            using HttpClient client = new HttpClient();
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-
-            string content = await client.GetStringAsync(url);
-
-            using StringReader reader = new StringReader(content);
-            string version = (await reader.ReadLineAsync())?.Trim() ?? string.Empty;
-            string mandatory = (await reader.ReadLineAsync())?.Trim() ?? string.Empty;
-
-            return (version, mandatory);
-        }
         private async Task PromptRestart()
         {
             var host = GetDialogHost();
@@ -108,7 +96,6 @@ namespace lanpingcj.Views.Pages
 
             if (result == ContentDialogResult.Primary)
             {
-
                 string? exePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
                 if (!string.IsNullOrEmpty(exePath))
                 {
@@ -116,77 +103,6 @@ namespace lanpingcj.Views.Pages
                     Application.Current.Shutdown();
                 }
             }
-        }
-        public async Task CheckUpdate()
-        {
-            var result = await GetVersion();
-
-            if (!bool.TryParse(result.Mandatory, out bool mandatory)) mandatory = false;
-
-            Version LatestVersion = new Version(result.Version);
-            Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion ?? "1.0.0");
-
-            if (LatestVersion > ThisVersion)
-            {
-                var host = GetDialogHost();
-                if (host == null) return;
-
-                var Dialog = new ContentDialog(host);
-
-                Dialog.Title = "有新版本可用!";
-                Dialog.Content = $"当前版本：{ThisVersion}\n最新版本：{LatestVersion}\n";
-                Dialog.PrimaryButtonText = "确定";
-                Dialog.CloseButtonText = "关闭";
-                Dialog.PrimaryButtonAppearance = ControlAppearance.Primary;
-                Dialog.SecondaryButtonAppearance = ControlAppearance.Secondary;
-
-                var Dialogresult = await Dialog.ShowAsync();
-                if (Dialogresult == ContentDialogResult.Primary)
-                {
-                    await DownloadUpdate();
-                }
-            }
-        }
-
-        public async Task DownloadUpdate()
-        {
-            string downloadUrl = "https://update.choujiang.lanpinggai.top/latest.exe";
-            string localFileName = "latest.exe";
-
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    byte[] fileBytes = await client.GetByteArrayAsync(downloadUrl);
-                    await File.WriteAllBytesAsync(localFileName, fileBytes);
-                }
-
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = localFileName,
-                    UseShellExecute = true
-                });
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"错误: {ex.Message}");
-            }
-        }
-
-        public SettingsPage()
-        {
-            InitializeComponent();
-
-            string currentConfig = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
-            if (string.IsNullOrEmpty(currentConfig) || !File.Exists(currentConfig))
-            {
-                currentConfig = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Properties.Settings.Default.defaultConfig ?? "config.json");
-            }
-
-            ValidateAndApplyConfig(currentConfig);
-
-            version.Text = Properties.Settings.Default.ThisVersion ?? "1.0.0";
-            version2.Text = $"v{Properties.Settings.Default.ThisVersion ?? "1.0.0"}";
         }
 
         private void LoadConfigHistory()
@@ -214,11 +130,7 @@ namespace lanpingcj.Views.Pages
                 Properties.Settings.Default.ConfigHistory.Add(path);
             }
 
-            string currentConfig = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
-            if (string.IsNullOrEmpty(currentConfig) || !File.Exists(currentConfig))
-            {
-                currentConfig = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Properties.Settings.Default.defaultConfig ?? "config.json");
-            }
+            string currentConfig = ConfigService.CurrentConfigPath;
 
             if (File.Exists(currentConfig) && !Properties.Settings.Default.ConfigHistory.Contains(currentConfig))
             {
@@ -237,7 +149,7 @@ namespace lanpingcj.Views.Pages
                 try
                 {
                     string jsonString = File.ReadAllText(path, Encoding.UTF8);
-                    Config? config = JsonSerializer.Deserialize<Config>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    Config? config = JsonSerializer.Deserialize<Config>(jsonString, ConfigService.JsonOptions);
                     if (config != null) name = config.ConfigName ?? string.Empty;
                 }
                 catch { }
@@ -324,29 +236,20 @@ namespace lanpingcj.Views.Pages
                 string safeName = string.Join("_", configNameInput.Split(Path.GetInvalidFileNameChars()));
                 string newFilePath = Path.Combine(configFolder, $"{safeName}_{DateTime.Now.Ticks}.json");
 
-                string actualFolderPath = folderPath.Replace("\\\\", "\\");
-                if (!Directory.Exists(actualFolderPath)) Directory.CreateDirectory(actualFolderPath);
+                string mindanFolder = ConfigService.MindanFolder;
+                if (!Directory.Exists(mindanFolder)) Directory.CreateDirectory(mindanFolder);
 
                 string randomTxtName = GenerateRandomFileName(12);
-                string mindanFullPath = Path.Combine(actualFolderPath, randomTxtName);
+                string mindanFullPath = Path.Combine(mindanFolder, randomTxtName);
                 File.WriteAllText(mindanFullPath, "示例姓名#0", Encoding.UTF8);
 
-                string template = $@"{{
-    ""ConfigName"":""{configNameInput.Replace("\"", "\\\"")}"",
-    ""mindan_path"":""{randomTxtName}"",
-    ""Repeat"":true,
-    ""Sound"":true,
-    ""TTS"":true,
-    ""Probability_balance"":true,
-    ""Lock"":false,
-    ""Lock_Password"":"""",
-    ""Use_StudentsID"":false,
-    ""Min_StudentsID"":1,
-    ""Max_StudentsID"":40,
-    ""Tittle"":""幸运儿""
-}}";
+                var newConfig = new Config
+                {
+                    ConfigName = configNameInput.Trim(),
+                    mindan_path = randomTxtName
+                };
 
-                File.WriteAllText(newFilePath, template, Encoding.UTF8);
+                File.WriteAllText(newFilePath, JsonSerializer.Serialize(newConfig, ConfigService.JsonOptions), Encoding.UTF8);
                 ValidateAndApplyConfig(newFilePath);
                 await PromptRestart();
             }
@@ -381,11 +284,10 @@ namespace lanpingcj.Views.Pages
                 try
                 {
                     string jsonString = File.ReadAllText(selectedPath, Encoding.UTF8);
-                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, WriteIndented = true };
-                    Config config = JsonSerializer.Deserialize<Config>(jsonString, options) ?? new Config();
+                    Config config = JsonSerializer.Deserialize<Config>(jsonString, ConfigService.JsonOptions) ?? new Config();
 
                     config.ConfigName = configNameInput.Trim();
-                    File.WriteAllText(selectedPath, JsonSerializer.Serialize(config, options), Encoding.UTF8);
+                    File.WriteAllText(selectedPath, JsonSerializer.Serialize(config, ConfigService.JsonOptions), Encoding.UTF8);
                 }
                 catch { }
 
@@ -417,7 +319,7 @@ namespace lanpingcj.Views.Pages
                     history.Remove(current);
                 }
 
-                string fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Properties.Settings.Default.defaultConfig ?? "config.json");
+                string fallback = ConfigService.DefaultConfigPath;
                 if (history != null && history.Count > 0)
                 {
                     fallback = history[0] ?? fallback;
@@ -478,7 +380,7 @@ namespace lanpingcj.Views.Pages
             try
             {
                 string jsonString = File.ReadAllText(filePath, Encoding.UTF8);
-                Config? config = JsonSerializer.Deserialize<Config>(jsonString, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                Config? config = JsonSerializer.Deserialize<Config>(jsonString, ConfigService.JsonOptions);
 
                 if (config == null) throw new Exception("文件格式不正确。");
 
@@ -497,6 +399,11 @@ namespace lanpingcj.Views.Pages
                 TTSToggleSwitch.IsChecked = config.TTS;
                 DuplicateToggleSwitch.IsChecked = !config.Repeat;
                 ProbabilityToggleSwitch.IsChecked = config.Probability_balance;
+                StudentIdToggleSwitch.IsChecked = config.Use_StudentsID;
+                MinIdBox.Value = config.Min_StudentsID;
+                MaxIdBox.Value = config.Max_StudentsID;
+                LockToggleSwitch.IsChecked = config.Lock;
+                LockPasswordBox.Password = config.Lock_Password ?? string.Empty;
                 _isUpdatingUI = false;
 
                 LoadConfigHistory();
@@ -509,90 +416,11 @@ namespace lanpingcj.Views.Pages
             }
         }
 
+        // 写入配置文件后同步刷新主窗口的内存配置，改动立即生效、无需重启
         private void UpdateJsonConfig(Action<Config> updateAction)
         {
-            try
-            {
-                string currentConfig = Properties.Settings.Default.CurrentConfigFile ?? string.Empty;
-                if (string.IsNullOrEmpty(currentConfig) || !File.Exists(currentConfig)) return;
-
-                string jsonString = File.ReadAllText(currentConfig, Encoding.UTF8);
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, WriteIndented = true };
-                Config? config = JsonSerializer.Deserialize<Config>(jsonString, options);
-
-                if (config != null)
-                {
-                    updateAction(config);
-                    File.WriteAllText(currentConfig, JsonSerializer.Serialize(config, options), Encoding.UTF8);
-                }
-            }
-            catch { }
-        }
-
-        public static void WriteManifest(bool Gettop)
-        {
-            var module = Process.GetCurrentProcess().MainModule;
-            if (module == null) return;
-
-            string exePath = module.FileName;
-            string manifestPath = exePath + ".manifest";
-            string uiAccessValue = Gettop ? "true" : "false";
-
-            string xmlContent = $@"<?xml version=""1.0"" encoding=""utf-8""?>
-<assembly manifestVersion=""1.0"" xmlns=""urn:schemas-microsoft-com:asm.v1"">
-  <assemblyIdentity version=""1.0.0.0"" name=""MyApplication.app""/>
-  <trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
-    <security>
-      <requestedPrivileges xmlns=""urn:schemas-microsoft-com:asm.v3"">
-        <requestedExecutionLevel level=""asInvoker"" uiAccess=""{uiAccessValue}"" />
-      </requestedPrivileges>
-    </security>
-  </trustInfo>
-</assembly>";
-
-            try
-            {
-                File.WriteAllText(manifestPath, xmlContent);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
-        }
-
-        private void TopmostToggleSwitch_Checked(object sender, RoutedEventArgs e)
-        {
-            SaveTopSetting(true);
-            WriteManifest(true);
-        }
-
-        private void TopmostToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
-        {
-            SaveTopSetting(false);
-            WriteManifest(false);
-        }
-
-        private async void SaveTopSetting(bool isEnabled)
-        {
-            if (IsLoaded)
-            {
-                try
-                {
-                    Properties.Settings.Default.Top = isEnabled;
-                    Properties.Settings.Default.Save();
-                    var moreInfoWindow = Application.Current.Windows.OfType<MoreInfo>().FirstOrDefault();
-                    if (moreInfoWindow != null)
-                    {
-                        await moreInfoWindow.TopDialog();
-                    }
-                    else
-                    {
-                        MoreInfo more = new MoreInfo();
-                        await more.TopDialog();
-                    }
-                }
-                catch { }
-            }
+            ConfigService.UpdateCurrent(updateAction);
+            Application.Current.Windows.OfType<MainWindow>().FirstOrDefault()?.RefreshConfig();
         }
 
         private void SoundToggleSwitch_Checked(object sender, RoutedEventArgs e)
@@ -635,96 +463,169 @@ namespace lanpingcj.Views.Pages
             if (!_isUpdatingUI) UpdateJsonConfig(c => c.Probability_balance = false);
         }
 
-        private void Reset_Probability(object sender, EventArgs e)
+        private void StudentIdToggleSwitch_Checked(object sender, RoutedEventArgs e)
         {
-            string MindanPath = Path.Combine(documentsPath, "mindan");
-            string[] files = { "mindan.txt", "Boy_mindan.txt", "Girl_mindan.txt", "Shengwu_mindan.txt" };
-
-            foreach (string file in files)
-            {
-                string filePath = Path.Combine(MindanPath, file);
-                if (File.Exists(filePath))
-                {
-                    try
-                    {
-                        string[] lines = File.ReadAllLines(filePath, Encoding.UTF8);
-                        List<string> cleanedLines = new List<string>();
-
-                        foreach (string line in lines)
-                        {
-                            if (!string.IsNullOrWhiteSpace(line))
-                            {
-                                int hashIndex = line.IndexOf('#');
-                                if (hashIndex >= 0)
-                                {
-                                    string cleanedName = line.Substring(0, hashIndex).Trim();
-                                    if (!string.IsNullOrEmpty(cleanedName))
-                                    {
-                                        cleanedLines.Add(cleanedName);
-                                    }
-                                }
-                                else
-                                {
-                                    cleanedLines.Add(line.Trim());
-                                }
-                            }
-                        }
-
-                        if (cleanedLines.Count > 0)
-                        {
-                            File.WriteAllLines(filePath, cleanedLines, Encoding.UTF8);
-                        }
-                        else
-                        {
-                            File.WriteAllText(filePath, "", Encoding.UTF8);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox w3 = new MessageBox { NewTittle = "错误", NewContent = $"处理文件 {file} 时出错: {ex.Message}" };
-                        w3.ShowDialog();
-                        return;
-                    }
-                }
-            }
-
-            MessageBox resultWindow = new MessageBox { NewTittle = "提示", NewContent = "概率平衡已重置" };
-            resultWindow.ShowDialog();
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Use_StudentsID = true);
         }
 
-        private void Restart(object sender, RoutedEventArgs e)
+        private void StudentIdToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
         {
-            string MindanPath = Path.Combine(documentsPath, "mindan");
-            string AlreadyPath = Path.Combine(MindanPath, "Already.txt");
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Use_StudentsID = false);
+        }
+
+        private void IdRangeBox_ValueChanged(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingUI || MinIdBox == null || MaxIdBox == null) return;
+
+            int min = (int)(MinIdBox.Value ?? 1);
+            int max = (int)(MaxIdBox.Value ?? 40);
+            if (min < 1) min = 1;
+            if (max < min) max = min;
+
+            UpdateJsonConfig(c =>
+            {
+                c.Min_StudentsID = min;
+                c.Max_StudentsID = max;
+            });
+        }
+
+        private async void LockToggleSwitch_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isUpdatingUI) return;
+
+            string password = LockPasswordBox.Password;
+            if (string.IsNullOrEmpty(password))
+            {
+                _isUpdatingUI = true;
+                LockToggleSwitch.IsChecked = false;
+                _isUpdatingUI = false;
+
+                var host = GetDialogHost();
+                if (host != null)
+                {
+                    var dialog = new ContentDialog(host)
+                    {
+                        Title = "无法开启锁定",
+                        Content = "请先在下方输入并保存密码，再开启设置锁定。",
+                        CloseButtonText = "确定"
+                    };
+                    await dialog.ShowAsync();
+                }
+                return;
+            }
+
+            UpdateJsonConfig(c =>
+            {
+                c.Lock = true;
+                c.Lock_Password = password;
+            });
+        }
+
+        private void LockToggleSwitch_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!_isUpdatingUI) UpdateJsonConfig(c => c.Lock = false);
+        }
+
+        private async void SaveLockPassword_Click(object sender, RoutedEventArgs e)
+        {
+            string password = LockPasswordBox.Password;
+            bool lockEnabled = LockToggleSwitch.IsChecked == true;
+
+            if (lockEnabled && string.IsNullOrEmpty(password))
+            {
+                var host = GetDialogHost();
+                if (host != null)
+                {
+                    var dialog = new ContentDialog(host)
+                    {
+                        Title = "密码不能为空",
+                        Content = "锁定已开启时不能将密码设为空，请先关闭锁定。",
+                        CloseButtonText = "确定"
+                    };
+                    await dialog.ShowAsync();
+                }
+                return;
+            }
+
+            UpdateJsonConfig(c => c.Lock_Password = password);
+
+            var host2 = GetDialogHost();
+            if (host2 != null)
+            {
+                var dialog = new ContentDialog(host2)
+                {
+                    Title = "已保存",
+                    Content = "设置锁密码已更新。",
+                    CloseButtonText = "确定"
+                };
+                await dialog.ShowAsync();
+            }
+        }
+
+        // 把当前名单里所有 "姓名#次数" 的计数清零
+        private async void Reset_Probability(object sender, EventArgs e)
+        {
+            var config = ConfigService.LoadCurrent();
+            string? mindanPath = ConfigService.GetMindanFullPath(config);
+
+            if (string.IsNullOrEmpty(mindanPath) || !File.Exists(mindanPath))
+            {
+                new WarningMeassageBox { errorNewContent = "未找到当前名单文件，无法重置概率！" }.ShowDialog();
+                return;
+            }
 
             try
             {
-                MainWindow mainWindow = new MainWindow();
-                mainWindow.ResetData();
+                var cleanedLines = File.ReadAllLines(mindanPath, Encoding.UTF8)
+                    .Where(line => !string.IsNullOrWhiteSpace(line))
+                    .Select(line =>
+                    {
+                        int hashIndex = line.IndexOf('#');
+                        string name = hashIndex >= 0 ? line.Substring(0, hashIndex).Trim() : line.Trim();
+                        return $"{name}#0";
+                    })
+                    .Where(line => line != "#0")
+                    .ToList();
 
-                MessageBox w3 = new MessageBox { NewTittle = "提示", NewContent = "已经重置点名不重复！" };
-                w3.ShowDialog();
+                File.WriteAllLines(mindanPath, cleanedLines, Encoding.UTF8);
+
+                Application.Current.Windows.OfType<MainWindow>().FirstOrDefault()?.ReloadRoster();
+
+                var host = GetDialogHost();
+                if (host != null)
+                {
+                    var dialog = new ContentDialog(host)
+                    {
+                        Title = "提示",
+                        Content = "概率平衡已重置，立即生效。",
+                        CloseButtonText = "确定"
+                    };
+                    await dialog.ShowAsync();
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                new WarningMeassageBox { errorNewContent = $"重置概率失败：\n{ex.Message}" }.ShowDialog();
             }
         }
-    }
 
-    public class Config
-    {
-        public string? ConfigName { get; set; } = string.Empty;
-        public string? mindan_path { get; set; } = string.Empty;
-        public bool Repeat { get; set; } = true;
-        public bool Sound { get; set; } = true;
-        public bool TTS { get; set; } = true;
-        public bool Probability_balance { get; set; } = true;
-        public bool Lock { get; set; } = false;
-        public string? Lock_Password { get; set; } = string.Empty;
-        public bool Use_StudentsID { get; set; } = false;
-        public int Min_StudentsID { get; set; } = 1;
-        public int Max_StudentsID { get; set; } = 40;
-        public string? Tittle { get; set; } = "幸运儿";
+        // 清空主窗口的"点名不重复"已抽名单
+        private async void Restart(object sender, RoutedEventArgs e)
+        {
+            var mainWindow = Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
+            mainWindow?.ResetData();
+
+            var host = GetDialogHost();
+            if (host != null)
+            {
+                var dialog = new ContentDialog(host)
+                {
+                    Title = "提示",
+                    Content = mainWindow != null ? "已经重置点名不重复！" : "未找到主窗口，请重启程序。",
+                    CloseButtonText = "确定"
+                };
+                await dialog.ShowAsync();
+            }
+        }
     }
 }

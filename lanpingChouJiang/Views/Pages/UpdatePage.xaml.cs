@@ -88,7 +88,7 @@ namespace lanpingcj.Views.Pages
 
         public async Task DownloadUpdate()
         {
-            string downloadUrl = "https://update.choujiang.lanpinggai.top/latest.exe";
+            string downloadUrl = UpdateService.DownloadUrl;
 
             if (isDownloading) return;
 
@@ -111,8 +111,7 @@ namespace lanpingcj.Views.Pages
                     existingFileSize = new FileInfo(localFileName).Length;
                 }
 
-                using HttpClient client = new HttpClient();
-                client.Timeout = TimeSpan.FromMinutes(30);
+                HttpClient client = UpdateService.Http;
 
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
                 if (existingFileSize > 0)
@@ -285,34 +284,14 @@ namespace lanpingcj.Views.Pages
             }
         }
 
-        public async Task<string> GetVersion()
-        {
-            try
-            {
-                string url = "https://update.choujiang.lanpinggai.top/version";
-                using HttpClient client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-
-                string content = await client.GetStringAsync(url);
-                if (string.IsNullOrWhiteSpace(content)) return "0.0.0";
-
-                using StringReader reader = new StringReader(content);
-                return (await reader.ReadLineAsync())?.Trim() ?? "0.0.0";
-            }
-            catch { return "0.0.0"; }
-        }
-
         private async Task CheckForUpdates()
         {
-            string versionStr = await GetVersion();
-            Version latestVersion = new Version(versionStr);
-            string currentVerStr = Properties.Settings.Default.ThisVersion;
-            Version thisVersion = new Version(string.IsNullOrWhiteSpace(currentVerStr) ? "0.0.0" : currentVerStr);
+            var (latestVersion, _) = await UpdateService.GetLatestVersionAsync();
 
-            if (latestVersion > thisVersion)
+            if (latestVersion > UpdateService.CurrentVersion)
             {
                 UpdateVersionCard.Visibility = Visibility.Visible;
-                VereionText.Text = versionStr;
+                VereionText.Text = latestVersion.ToString();
                 HaveUpdateText();
             }
             else

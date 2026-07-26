@@ -1,3 +1,7 @@
 lanpingChouJiang/bin/
 lanpingChouJiang/obj/
 .vs
+*.user
+*.suo
+*.bak
+latest.exe

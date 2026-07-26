@@ -1,10 +1,6 @@
-﻿using lanpingcj.Views.Pages;
 using Microsoft.Toolkit.Uwp.Notifications;
 using System.Diagnostics;
 using System.Windows;
-using System.Windows.Ink;
-using Windows.Foundation.Collections;
-using Wpf.Ui.Controls;
 
 namespace lanpingcj
 {
@@ -13,79 +9,35 @@ namespace lanpingcj
     /// </summary>
     public partial class App : Application
     {
-        // System.Threading.Mutex mutex;
-
         public App()
         {
-            //this.Startup += new StartupEventHandler(App_Startup);
-            // Listen to notification activation
+            // 处理系统通知的点击动作
             ToastNotificationManagerCompat.OnActivated += toastArgs =>
             {
-                // Obtain the arguments from the notification
                 ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
 
-                // Obtain any user input (text boxes, menu selections) from the notification
-                ValueSet userInput = toastArgs.UserInput;
+                if (!args.TryGetValue("action", out string action)) return;
 
-                // Need to dispatch to UI thread if performing UI operations
-                if (args.TryGetValue("action", out string action))
+                switch (action)
                 {
-                    switch (action)
-                    {
-                        case "Download":
-                            Debug.WriteLine("这是一个DownloadToast!");
-                            break;
+                    case "RunApp":
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = "latest.exe",
+                            UseShellExecute = true
+                        });
+                        break;
 
-                        case "RunApp":
-                           
-                                Process.Start(new ProcessStartInfo
-                                {
-                                    FileName = "latest.exe",
-                                    UseShellExecute = true
-                                });
-
-                                // 安装后重置下载状态
-                            
-                            
-                    
-                    break;
-
-                        case "OpenMoreInfo":
-                            var appDispatcher = Application.Current?.Dispatcher;
-                            if (appDispatcher != null)
-                            {
-                                appDispatcher.BeginInvoke(new Action(() =>
-                                {
-                                    var moreInfo = new MoreInfo();
-                                    var UpdatePage = new UpdatePage();
-                                    moreInfo.ShowDialog();
-                                    moreInfo.ToUpdatePage = true;
-                                    moreInfo.NavigationView.Navigate(typeof(UpdatePage));
-                                    UpdatePage.FromOther = true;
-
-                                }));
-                            }
-                            else
-                            {
-                                var t = new Thread(() =>
-                                {
-                                    var moreInfo = new MoreInfo();
-                                    moreInfo.ShowDialog();
-                                    System.Windows.Threading.Dispatcher.Run();
-                                });
-                                t.SetApartmentState(ApartmentState.STA);
-                                t.Start();
-                            }
-                            break;
-                    }
+                    case "OpenMoreInfo":
+                        // 点击"有新版本"通知：打开更新页面
+                        Application.Current?.Dispatcher?.BeginInvoke(new Action(() =>
+                        {
+                            var moreInfo = new MoreInfo { ToUpdatePage = true };
+                            moreInfo.Show();
+                        }));
+                        break;
                 }
-                ;
             };
-
-
         }
     }
 }
-
-
-

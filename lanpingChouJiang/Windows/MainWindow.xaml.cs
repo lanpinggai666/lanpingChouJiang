@@ -1,14 +1,12 @@
-﻿using Microsoft.Toolkit.Uwp.Notifications;
+using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -17,7 +15,6 @@ using System.Collections.Generic;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Wpf.Ui;
 
 namespace lanpingcj
 {
@@ -41,6 +38,7 @@ namespace lanpingcj
         private static Mutex? _appMutex;
         private static bool _hasHandle = false;
         private DispatcherTimer? _updateTimer;
+        private DispatcherTimer? _clockTimer;
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
@@ -100,19 +98,13 @@ namespace lanpingcj
             public IntPtr dwExtraInfo;
         }
 
-        public string ConfigFilePath = Properties.Settings.Default.CurrentConfigFile ?? "config.json";
+        public string ConfigFilePath = ConfigService.CurrentConfigPath;
         public Config config = new Config();
         private List<string> _allNames = new List<string>();
         private HashSet<string> _alreadySelected = new HashSet<string>();
         private Dictionary<string, int> _nameCounts = new Dictionary<string, int>();
         private Random _random = new Random();
-        public string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "lanpingcj_mindan").Replace("\\", "\\\\");
-
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            PropertyNameCaseInsensitive = true
-        };
+        public string folderPath = ConfigService.MindanFolder;
 
         private static bool IsAlreadyRunning()
         {
@@ -165,25 +157,12 @@ namespace lanpingcj
             }
         }
 
-        public async Task<(string Version, string Mandatory)> GetVersion()
-        {
-            string url = "https://update.choujiang.lanpinggai.top/version";
-            using HttpClient client = new HttpClient();
-            client.Timeout = TimeSpan.FromSeconds(30);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0");
-            string content = await client.GetStringAsync(url);
-            using StringReader reader = new StringReader(content);
-            string version = reader.ReadLine()?.Trim() ?? string.Empty;
-            string mandatory = reader.ReadLine()?.Trim() ?? string.Empty;
-            return (version, mandatory);
-        }
-
         public static void EnsurePreferExternalManifest()
         {
             const string subKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\SideBySide";
             try
             {
-                using RegistryKey key = Registry.LocalMachine.OpenSubKey(subKey, true);
+                using RegistryKey? key = Registry.LocalMachine.OpenSubKey(subKey, true);
                 if (key != null && key.GetValue("PreferExternalManifest")?.ToString() != "1")
                 {
                     key.SetValue("PreferExternalManifest", 1, RegistryValueKind.DWord);
@@ -192,32 +171,47 @@ namespace lanpingcj
             catch { }
         }
 
-        public async Task CheckUpdate()
+        public async Task CheckUpdateAsync()
         {
-            var result = await GetVersion();
-            bool mandatory = bool.TryParse(result.Mandatory, out bool m) && m;
-            Version LatestVersion = new Version(result.Version);
-            Version ThisVersion = new Version(Properties.Settings.Default.ThisVersion ?? "1.0.0.0");
+            var (latest, mandatory) = await UpdateService.GetLatestVersionAsync();
+            if (latest <= UpdateService.CurrentVersion) return;
 
-            if (LatestVersion > ThisVersion)
+            if (mandatory)
             {
-                await ShowSimpleToast("更新提醒", $"我们检测到了一个新的更新：{LatestVersion}，点击这个通知以获取更新", "OpenMoreInfo");
+                // 强制更新：打开更新页面，关闭窗口即退出程序
+                MoreInfo moreInfo = new MoreInfo { ToUpdatePage = true };
+                moreInfo.Closed += (s, args) => Process.GetCurrentProcess().Kill();
+                moreInfo.Show();
+            }
+            else
+            {
+                ShowToast("更新提醒", $"我们检测到了一个新的更新：{latest}，点击这个通知以获取更新", "OpenMoreInfo");
             }
         }
 
-        public async Task ShowSimpleToast(string tittle, string text, string ToastAction)
+        private void ShowToast(string title, string text, string toastAction)
         {
-            new ToastContentBuilder()
-                .AddArgument("action", ToastAction)
-                .AddText(tittle)
-                .AddText(text)
-                .Show();
+            try
+            {
+                new ToastContentBuilder()
+                    .AddArgument("action", toastAction)
+                    .AddText(title ?? string.Empty)
+                    .AddText(text ?? string.Empty)
+                    .Show();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
 
         private void InitializeTimer()
         {
+            double interval = Properties.Settings.Default.Updatetime;
+            if (interval <= 0) interval = 20;
+
             _updateTimer = new DispatcherTimer();
-            _updateTimer.Interval = TimeSpan.FromMinutes(Properties.Settings.Default.Updatetime);
+            _updateTimer.Interval = TimeSpan.FromMinutes(interval);
             _updateTimer.Tick += UpdateTimer_Tick;
             _updateTimer.Start();
         }
@@ -226,22 +220,11 @@ namespace lanpingcj
         {
             try
             {
-                await CheckUpdate();
-                var result = await GetVersion();
-                bool mandatory = bool.TryParse(result.Mandatory, out bool m) && m;
-                if (mandatory)
-                {
-                    MoreInfo moreInfo = new MoreInfo();
-                    moreInfo.Closed += (s, args) =>
-                    {
-                        Process.GetCurrentProcess().Kill();
-                    };
-                }
+                await CheckUpdateAsync();
             }
             catch (Exception ex)
             {
-                string error = $"错误: {ex.Message}\n请检查Internet连接和对Github的连通性。";
-                await ShowSimpleToast("更新出错", error, "Download");
+                Debug.WriteLine($"检查更新失败: {ex.Message}");
             }
         }
 
@@ -261,12 +244,7 @@ namespace lanpingcj
 
             InitializeTimer();
 
-            string configContent = @"{}";
-            DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(1);
-            timer.Tick += Timer_Tick;
-            timer.Start();
-
+            string configContent;
             try
             {
                 if (File.Exists(ConfigFilePath))
@@ -280,22 +258,20 @@ namespace lanpingcj
             }
             catch
             {
-                string defaultPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory ?? string.Empty, Properties.Settings.Default.defaultConfig ?? "default.json");
-                if (File.Exists(defaultPath))
-                {
-                    configContent = File.ReadAllText(defaultPath);
-                }
-                else
-                {
-                    configContent = $@"{{""ConfigName"":""默认"",""mindan_path"":""default.txt"",""Repeat"":true,""Sound"":true,""TTS"":true,""Probability_balance"":true,""Lock"":false,""Lock_Password"":"""",""Use_StudentsID"":false,""Min_StudentsID"":1,""Max_StudentsID"":40,""Tittle"":""幸运儿""}}";
-                    CheckFile(Path.Combine(folderPath, "default.txt"));
-                }
-                SendToastNotification("错误", "无法访问配置文件，已切换至默认配置文件！");
+                configContent = $@"{{""ConfigName"":""默认"",""mindan_path"":""default.txt"",""Repeat"":true,""Sound"":true,""TTS"":true,""Probability_balance"":true,""Lock"":false,""Lock_Password"":"""",""Use_StudentsID"":false,""Min_StudentsID"":1,""Max_StudentsID"":40,""Tittle"":""幸运儿""}}";
+                CheckFile(Path.Combine(folderPath, "default.txt"));
+                ShowToast("错误", "无法访问配置文件，已切换至默认配置文件！", "default");
             }
 
-            config = JsonSerializer.Deserialize<Config>(configContent, _jsonOptions) ?? new Config();
+            config = JsonSerializer.Deserialize<Config>(configContent, ConfigService.JsonOptions) ?? new Config();
             InitializeComponent();
             LoadData();
+
+            _clockTimer = new DispatcherTimer();
+            _clockTimer.Interval = TimeSpan.FromSeconds(1);
+            _clockTimer.Tick += Timer_Tick;
+            _clockTimer.Start();
+            time.Text = DateTime.Now.ToString("HH:mm");
 
             this.Loaded += async (sender, e) =>
             {
@@ -303,22 +279,11 @@ namespace lanpingcj
                 AutoClickFocus(); // 窗口加载完毕后交还焦点给后台（如PPT）
                 try
                 {
-                    await CheckUpdate();
-                    var result = await GetVersion();
-                    bool mandatory = bool.TryParse(result.Mandatory, out bool m) && m;
-                    if (mandatory)
-                    {
-                        MoreInfo moreInfo = new MoreInfo();
-                        moreInfo.Closed += (s, args) =>
-                        {
-                            Process.GetCurrentProcess().Kill();
-                        };
-                    }
+                    await CheckUpdateAsync();
                 }
                 catch (Exception ex)
                 {
-                    string error = $"错误: {ex.Message}\n请检查Internet连接和对Github的连通性。";
-                    await ShowSimpleToast("更新出错", error, "Download");
+                    Debug.WriteLine($"检查更新失败: {ex.Message}");
                 }
             };
 
@@ -478,8 +443,8 @@ namespace lanpingcj
 
         private void LoadData()
         {
-            if (string.IsNullOrEmpty(config?.mindan_path)) return;
-            string mindanPath = Path.Combine(folderPath, config.mindan_path);
+            string? mindanPath = ConfigService.GetMindanFullPath(config);
+            if (string.IsNullOrEmpty(mindanPath)) return;
             CheckFile(mindanPath);
             if (!File.Exists(mindanPath)) return;
 
@@ -497,17 +462,36 @@ namespace lanpingcj
                 if (line.Contains("#"))
                 {
                     var parts = line.Split('#');
-                    name = parts[0];
+                    name = parts[0].Trim();
                     if (parts.Length > 1) int.TryParse(parts[1], out count);
                 }
                 else
                 {
-                    name = line;
+                    name = line.Trim();
                 }
 
+                if (string.IsNullOrEmpty(name)) continue;
                 _allNames.Add(name);
                 _nameCounts[name] = count;
             }
+        }
+
+        /// <summary>
+        /// 重新读取当前配置文件（供设置页在修改配置后调用，立即生效）
+        /// </summary>
+        public void RefreshConfig()
+        {
+            config = ConfigService.LoadCurrent();
+        }
+
+        /// <summary>
+        /// 重新加载名单并清空"点名不重复"记录（供名单管理页调用，免重启生效）
+        /// </summary>
+        public void ReloadRoster()
+        {
+            RefreshConfig();
+            LoadData();
+            _alreadySelected.Clear();
         }
 
         private string GetRollCallResult(bool shouldExclude, bool isBalance)
@@ -549,24 +533,31 @@ namespace lanpingcj
             return selectedName;
         }
 
+        // 学号抽取模式：在 [Min_StudentsID, Max_StudentsID] 范围内随机抽取
+        private string GetStudentIdResult(bool shouldExclude)
+        {
+            int min = Math.Min(config.Min_StudentsID, config.Max_StudentsID);
+            int max = Math.Max(config.Min_StudentsID, config.Max_StudentsID);
+            if (min < 1) min = 1;
+
+            var allIds = Enumerable.Range(min, max - min + 1).Select(i => i.ToString()).ToList();
+            var candidates = shouldExclude
+                ? allIds.Where(id => !_alreadySelected.Contains(id)).ToList()
+                : allIds;
+
+            if (shouldExclude && candidates.Count == 0)
+            {
+                _alreadySelected.Clear();
+                candidates = allIds;
+            }
+
+            if (candidates.Count == 0) return string.Empty;
+            return candidates[_random.Next(candidates.Count)];
+        }
+
         public void ResetData()
         {
             _alreadySelected.Clear();
-        }
-
-        private void SendToastNotification(string title, string content)
-        {
-            try
-            {
-                new ToastContentBuilder()
-                    .AddText(title ?? string.Empty)
-                    .AddText(content ?? string.Empty)
-                    .Show();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine(ex.Message);
-            }
         }
 
         private void CheckFile(string filepath)
@@ -597,10 +588,10 @@ namespace lanpingcj
 
         private void SaveData()
         {
-            if (string.IsNullOrEmpty(config?.mindan_path)) return;
+            string? mindanPath = ConfigService.GetMindanFullPath(config);
+            if (string.IsNullOrEmpty(mindanPath)) return;
             try
             {
-                string mindanPath = Path.Combine(folderPath, config.mindan_path);
                 var lines = _allNames.Select(name => $"{name}#{_nameCounts.GetValueOrDefault(name, 0)}");
                 File.WriteAllLines(mindanPath, lines, Encoding.UTF8);
             }
@@ -620,8 +611,11 @@ namespace lanpingcj
             if (config == null) return;
 
             bool shouldExclude = !config.Repeat;
-            bool isBalance = config.Probability_balance;
-            string result = GetRollCallResult(shouldExclude, isBalance);
+            bool useStudentId = config.Use_StudentsID;
+
+            string result = useStudentId
+                ? GetStudentIdResult(shouldExclude)
+                : GetRollCallResult(shouldExclude, config.Probability_balance);
 
             if (result == string.Empty)
             {
@@ -636,42 +630,29 @@ namespace lanpingcj
                     _alreadySelected.Add(result);
                 }
 
-                if (!_nameCounts.ContainsKey(result)) _nameCounts[result] = 0;
-                _nameCounts[result]++;
-                SaveData();
+                // 学号模式没有名单文件，不记录概率平衡计数
+                if (!useStudentId)
+                {
+                    _nameCounts[result] = _nameCounts.GetValueOrDefault(result, 0) + 1;
+                    SaveData();
+                }
 
+                string displayResult = useStudentId ? $"{result}号" : result;
                 string Tittle = config.Tittle ?? "幸运儿";
                 string ConfigName = config.ConfigName ?? string.Empty;
 
                 string IsRepeatStatusText = config.Repeat ? string.Empty : "已开启点名不重复！";
 
                 string NewTittle = "抽奖结果";
-                string NewContent = $"{Tittle}是：{result}";
+                string NewContent = $"{Tittle}是：{displayResult}";
                 string New_extra_text = $"配置文件：{ConfigName}\n{IsRepeatStatusText}";
-                OpenMessageBox(NewTittle, NewContent, New_extra_text, result);
+                OpenMessageBox(NewTittle, NewContent, New_extra_text, displayResult);
             }
-        }
-
-        public static int GetLineCount(string? filePath)
-        {
-            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
-            {
-                return 0;
-            }
-            int lineCount = 0;
-            using (StreamReader reader = new StreamReader(filePath))
-            {
-                while (reader.ReadLine() != null)
-                {
-                    lineCount++;
-                }
-            }
-            return lineCount;
         }
 
         void More_Click(object sender, EventArgs e)
         {
-            new MoreInfo().Show();
+            MoreInfo.ShowUnique();
             AutoClickFocus(); // 弹窗关闭后强制释放焦点
         }
 
@@ -682,9 +663,9 @@ namespace lanpingcj
 
         void Open_mingdan(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(config?.mindan_path))
+            string? mindanPath = ConfigService.GetMindanFullPath(config);
+            if (!string.IsNullOrEmpty(mindanPath))
             {
-                string mindanPath = Path.Combine(folderPath, config.mindan_path);
                 string? dir = Path.GetDirectoryName(mindanPath);
                 if (dir != null && Directory.Exists(dir))
                 {
@@ -707,23 +688,7 @@ namespace lanpingcj
             messageBox.New_extra_text = New_extra_text;
             messageBox.studentsName = studentsname;
             messageBox.ShowDialog();
-            AutoClickFocus(); 
+            AutoClickFocus();
         }
-    }
-
-    public class Config
-    {
-        public string mindan_path { get; set; } = string.Empty;
-        public string ConfigName { get; set; } = string.Empty;
-        public bool Repeat { get; set; }
-        public bool Sound { get; set; }
-        public bool TTS { get; set; }
-        public bool Probability_balance { get; set; }
-        public bool Lock { get; set; }
-        public string Lock_Password { get; set; } = string.Empty;
-        public bool Use_StudentsID { get; set; }
-        public int Min_StudentsID { get; set; }
-        public int Max_StudentsID { get; set; }
-        public string Tittle { get; set; } = string.Empty;
     }
 }
